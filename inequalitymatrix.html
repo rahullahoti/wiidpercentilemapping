@@ -188,6 +188,21 @@ body {
 }
 .zoom-btn:hover { background: var(--border-light); color: var(--text); }
 .zoom-btn.hidden { display: none; }
+.zoom-sep { width: 1px; height: 20px; background: var(--border-light); margin: 0 2px; }
+.download-btn { background: var(--accent); color: #fff !important; border-color: var(--accent); font-weight: 600; letter-spacing: 0.01em; }
+.download-btn:hover:not(:disabled) { background: #9A2F16 !important; color: #fff !important; }
+.download-btn:disabled { background: #AAA !important; border-color: #AAA !important; cursor: wait; opacity: 0.8; }
+.download-btn.done { background: #2D7A50 !important; border-color: #2D7A50 !important; }
+.dl-wrap { position: relative; }
+.dl-pop { position: absolute; top: calc(100% + 6px); right: 0; background: var(--bg); border: 1px solid var(--border-light); border-radius: 8px; padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 280px; }
+.dl-pop.hidden { display: none; }
+.dl-pop-label { font-size: 0.7rem; color: var(--text-mid); margin-bottom: 4px; display: block; }
+.dl-pop-row { display: flex; align-items: center; gap: 2px; }
+.dl-pop-input { flex: 1; font-size: 0.82rem; padding: 5px 8px; border: 1px solid var(--border-light); border-radius: 5px 0 0 5px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; min-width: 0; }
+.dl-pop-input:focus { border-color: var(--accent); }
+.dl-pop-ext { font-size: 0.78rem; color: var(--text-faint); padding: 5px 4px 5px 0; background: var(--bg); border: 1px solid var(--border-light); border-left: none; border-radius: 0; }
+.dl-pop-go { padding: 5px 14px; font-size: 0.82rem; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: 0 5px 5px 0; cursor: pointer; white-space: nowrap; }
+.dl-pop-go:hover { background: #9A2F16; }
 
 /* Fullscreen mode */
 .chart-wrap.fullscreen {
@@ -705,13 +720,13 @@ body {
     </div>
     <div class="ctrl">
       <label>Threshold</label>
-      <input type="number" id="thresholdInput" value="50" min="20" max="80" step="1">
+      <input type="number" id="thresholdInput" value="40" min="20" max="80" step="1">
     </div>
     <div class="ctrl">
       <label>Bubble Size</label>
       <select id="sizeBySelect">
         <option value="none">Uniform</option>
-        <option value="population">Population</option>
+        <option value="population" selected>Population</option>
         <option value="gdp">GDP per capita</option>
       </select>
     </div>
@@ -753,6 +768,18 @@ body {
       <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">−</button>
       <button class="zoom-btn hidden" id="resetZoomBtn">Reset zoom</button>
       <button class="zoom-btn" id="expandBtn" title="Expand chart">⛶ Expand</button>
+      <span class="zoom-sep"></span>
+      <div class="dl-wrap">
+        <button class="zoom-btn download-btn" id="downloadBtn" title="Download chart as image">⬇ Download</button>
+        <div class="dl-pop hidden" id="dlPop">
+          <label class="dl-pop-label">Filename</label>
+          <div class="dl-pop-row">
+            <input type="text" id="dlFilename" class="dl-pop-input" spellcheck="false">
+            <span class="dl-pop-ext">.png</span>
+            <button class="dl-pop-go" id="dlConfirm">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="zoom-hint" id="zoomHint">Scroll to zoom · Drag to pan</div>
   </div>
@@ -806,7 +833,7 @@ body {
   <!-- SOURCE -->
   <div class="source-block">
     <p><strong>Source:</strong> UNU-WIDER, World Income Inequality Database (WIID) Companion dataset (wiidcountry and/or wiidglobal). Version 28 April 2025. <a href="https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425" style="color:var(--text-mid)">https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425</a></p>
-    <p><strong>Methodology:</strong> Change is calculated as Gini(2022) − Gini(1990). The quadrant threshold is set at 50 by default but is configurable above. Gini values range from 0 (perfect equality) to 100 (maximum inequality).</p>
+    <p><strong>Methodology:</strong> Change is calculated as Gini(2022) − Gini(1990). The quadrant threshold is set at 40 by default but is configurable above. Gini values range from 0 (perfect equality) to 100 (maximum inequality).</p>
   </div>
 </div>
 
@@ -844,11 +871,11 @@ const QUADRANT_DEFS = [
 
 // ===== STATE =====
 let S = {
-  threshold: 50,
+  threshold: 40,
   regionFilter: 'all',
   incomeFilter: 'all',
   search: '',
-  sizeBy: 'none',
+  sizeBy: 'population',
   baseYear: '1990',
   finalYear: '2022',
   xAxis: 'base',  // 'base' or 'final'
@@ -857,7 +884,7 @@ let S = {
 };
 
 // ===== URL STATE =====
-const DEFAULTS = { threshold:50, regionFilter:'all', incomeFilter:'all', search:'', sizeBy:'none', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
+const DEFAULTS = { threshold:40, regionFilter:'all', incomeFilter:'all', search:'', sizeBy:'population', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
 const VALID_SIZES = new Set(['none','population','gdp']);
 const VALID_YEARS = new Set(['1990','2000','2010','2019','2022']);
 const YEAR_ORDER = ['1990','2000','2010','2019','2022'];
@@ -1591,6 +1618,301 @@ function buildMovers() {
 }
 
 
+// ===== CHART DOWNLOAD =====
+function downloadChart(exportFilename) {
+  const fileName = (exportFilename || `inequality-${S.baseYear}-${S.finalYear}`)
+    .replace(/[<>:"/\\|?*]/g, '_') + '.png';
+ 
+  const btn = document.getElementById('downloadBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '\u23F3 Exporting\u2026';
+
+ 
+  const data = currentData;
+  if (!data || !data.length) {
+    btn.disabled = false; btn.textContent = origText;
+    return;
+  }
+
+  const DPR = 2;
+  const EW = 1600, EH = 1140;
+  const T = S.threshold;
+  const yearStr = yearLabel();
+  const xLabel = S.xAxis === 'base' ? S.baseYear : S.finalYear;
+  const hasSearch = S.search.length > 0;
+
+  // Layout
+  const padX = 80, padR = 50, titleH = 95;
+  const chartT = titleH + 5;
+  const chartW = EW - padX - padR;
+  const legendH = S.sizeBy !== 'none' ? 100 : 60;
+  const sourceH = 34;
+  const chartH = EH - chartT - legendH - sourceH - 16;
+  const chartB = chartT + chartH;
+
+  // Scales
+  const xe = d3.extent(data, d => xVal(d));
+  const ye = d3.extent(data, d => giniChange(d));
+  const xp = (xe[1] - xe[0]) * 0.08 || 5;
+  const yp = (ye[1] - ye[0]) * 0.08 || 3;
+  const exSc = d3.scaleLinear().domain([Math.min(xe[0]-xp, 15), Math.max(xe[1]+xp, 80)]).range([0, chartW]);
+  const eySc = d3.scaleLinear().domain([Math.min(ye[0]-yp, -25), Math.max(ye[1]+yp, 20)]).range([chartH, 0]);
+  const popE = d3.extent(data, d => d.population);
+  const gdpE = d3.extent(data, d => d.gdp);
+  const erPop = d3.scaleSqrt().domain([0, popE[1]]).range([3, 28]);
+  const erGdp = d3.scaleSqrt().domain([0, gdpE[1]]).range([3, 18]);
+  function eR(d) {
+    if (S.sizeBy === 'population') return erPop(d.population);
+    if (S.sizeBy === 'gdp') return erGdp(d.gdp);
+    return 4.5;
+  }
+
+  // Subtitle from active filters
+  const filters = [];
+  if (S.regionFilter !== 'all') filters.push(REGION_SHORT[S.regionFilter] || S.regionFilter);
+  if (S.incomeFilter !== 'all') filters.push(S.incomeFilter);
+  if (S.hiddenRegions.size > 0) filters.push(S.hiddenRegions.size + ' regions hidden');
+  if (hasSearch) filters.push('Search: ' + S.search);
+
+ 
+  const s = [];
+  s.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${EW}" height="${EH}" viewBox="0 0 ${EW} ${EH}">`);
+  s.push(`<rect width="${EW}" height="${EH}" fill="#FAFAF7"/>`);
+
+  // Title block
+  s.push(`<text x="${padX}" y="38" font-family="Georgia,serif" font-size="24" font-weight="700" fill="#222220">${escXml('Income Inequality: Level & Change, ' + yearStr)}</text>`);
+  let metaY = 62;
+  if (filters.length) {
+    s.push(`<text x="${padX}" y="${metaY}" font-family="sans-serif" font-size="13" fill="#888882">${escXml(filters.join(' \u00B7 '))}</text>`);
+    metaY = 80;
+  }
+  s.push(`<text x="${padX}" y="${metaY}" font-family="sans-serif" font-size="12" fill="#ABAAA2">${escXml(data.length + ' countries \u00B7 Bubble = ' + (S.sizeBy === 'none' ? 'uniform' : S.sizeBy) + ' \u00B7 Threshold: Gini ' + T)}</text>`);
+
+  // Chart group
+  s.push(`<g transform="translate(${padX},${chartT})">`);
+
+  // Quadrant fills — clamp tx/ty to chart bounds
+  const tx = Math.max(0, Math.min(chartW, exSc(T)));
+  const ty = Math.max(0, Math.min(chartH, eySc(0)));
+  [
+    { x:0, y:ty, w:tx, h:chartH-ty, fill:'#E6F2EC' },
+    { x:0, y:0, w:tx, h:ty, fill:'#FFF6E0' },
+    { x:tx, y:ty, w:chartW-tx, h:chartH-ty, fill:'#E8F0F8' },
+    { x:tx, y:0, w:chartW-tx, h:ty, fill:'#FCEAE8' }
+  ].forEach(q => {
+    if (q.w > 0 && q.h > 0) s.push(`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${q.fill}" opacity="0.5"/>`);
+  });
+
+  // Threshold lines
+  s.push(`<line x1="${tx}" x2="${tx}" y1="0" y2="${chartH}" stroke="#999" stroke-dasharray="6,4" stroke-width="1.2"/>`);
+  s.push(`<line x1="0" x2="${chartW}" y1="${ty}" y2="${ty}" stroke="#999" stroke-dasharray="6,4" stroke-width="1.2"/>`);
+
+  // Quadrant labels
+  const qlPad = 8, qlFs = 11;
+  [
+    { t:'Lower &amp; Declining', x:qlPad, y:chartH-qlPad, c:'#2D7A50', a:'start' },
+    { t:'Lower &amp; Rising', x:qlPad, y:qlPad+qlFs, c:'#C47F17', a:'start' },
+    { t:'Higher &amp; Declining', x:chartW-qlPad, y:chartH-qlPad, c:'#336B99', a:'end' },
+    { t:'Higher &amp; Rising', x:chartW-qlPad, y:qlPad+qlFs, c:'#C44536', a:'end' }
+  ].forEach(q => {
+    s.push(`<text x="${q.x}" y="${q.y}" font-family="sans-serif" font-size="${qlFs}" font-weight="600" fill="${q.c}" text-anchor="${q.a}" opacity="0.7">${q.t}</text>`);
+  });
+
+  // Grid + tick labels
+  exSc.ticks(8).forEach(v => {
+    const x = exSc(v);
+    s.push(`<line x1="${x}" x2="${x}" y1="0" y2="${chartH}" stroke="#E8E6DF" stroke-dasharray="2,3"/>`);
+    s.push(`<text x="${x}" y="${chartH+18}" font-family="sans-serif" font-size="11" fill="#888882" text-anchor="middle">${v}</text>`);
+  });
+  eySc.ticks(8).forEach(v => {
+    const y = eySc(v);
+    s.push(`<line x1="0" x2="${chartW}" y1="${y}" y2="${y}" stroke="#E8E6DF" stroke-dasharray="2,3"/>`);
+    s.push(`<text x="-14" y="${y+4}" font-family="sans-serif" font-size="11" fill="#888882" text-anchor="end">${v}</text>`);
+  });
+
+  // Axis labels
+  s.push(`<text x="${chartW/2}" y="${chartH+42}" font-family="sans-serif" font-size="13" font-weight="500" fill="#555550" text-anchor="middle">\u2190 Lower inequality    Gini index (${escXml(xLabel)})    Higher inequality \u2192</text>`);
+  s.push(`<g transform="translate(-54,${chartH/2}) rotate(-90)"><text font-family="sans-serif" font-size="13" font-weight="500" fill="#555550" text-anchor="middle">\u2190 Declined    Change in Gini, ${escXml(yearStr)}    Rose \u2192</text></g>`);
+
+  // Dots — large behind small
+  const sortedDots = [...data].sort((a,b) => eR(b) - eR(a));
+  sortedDots.forEach(d => {
+    const cx = exSc(xVal(d)), cy = eySc(giniChange(d)), r = eR(d);
+    const matched = hasSearch && isMatch(d);
+    const dimmed = hasSearch && !matched;
+    const opacity = dimmed ? 0.08 : (matched ? 0.9 : 0.75);
+    const strokeCol = matched ? '#BA3A1E' : '#fff';
+    const strokeW = matched ? 2 : 0.8;
+    const strokeOp = matched ? 1 : 0.7;
+    s.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${REGION_COLORS[d.region_wb]||'#999'}" opacity="${opacity}" stroke="${strokeCol}" stroke-width="${strokeW}" stroke-opacity="${strokeOp}"/>`);
+  });
+
+  // Smart labels — search matches get priority + full country names
+  // Try right side first, then left side for dots near right edge
+  const labelSorted = [...data].sort((a,b) => {
+    const am = hasSearch && isMatch(a) ? 1 : 0;
+    const bm = hasSearch && isMatch(b) ? 1 : 0;
+    if (bm !== am) return bm - am;
+    return b.population - a.population;
+  });
+  const placed = [];
+  const maxLabels = Math.min(50, data.length);
+  let labelCount = 0;
+  labelSorted.forEach(d => {
+    if (labelCount >= maxLabels) return;
+    const cx = exSc(xVal(d)), cy = eySc(giniChange(d));
+    if (cx < -20 || cx > chartW + 20 || cy < -10 || cy > chartH + 10) return;
+    const matched = hasSearch && isMatch(d);
+    const dimmed = hasSearch && !matched;
+    const text = matched ? d.country : d.c3;
+    const r = eR(d);
+    const charW = matched ? 6.5 : 5.5;
+    const lw = text.length * charW, lh = 12;
+
+    // Try right side, then left side
+    let lx = cx + r + 3, ly = cy + 3.5;
+    let box = { x:lx-1, y:ly-lh, w:lw+2, h:lh+2 };
+    let ok = (lx + lw <= chartW + 10) && (lx >= -5);
+
+    if (!ok || (!matched && placed.some(p => box.x < p.x+p.w && box.x+box.w > p.x && box.y < p.y+p.h && box.y+box.h > p.y))) {
+      // Try left side
+      lx = cx - r - lw - 3;
+      box = { x:lx-1, y:ly-lh, w:lw+2, h:lh+2 };
+      ok = (lx >= -5) && (lx + lw <= chartW + 10);
+    }
+
+    if (!matched) {
+      if (!ok) return;
+      const collides = placed.some(p => box.x < p.x+p.w && box.x+box.w > p.x && box.y < p.y+p.h && box.y+box.h > p.y);
+      if (collides) return;
+    }
+    placed.push(box);
+    const fill = matched ? '#BA3A1E' : '#888882';
+    const fw = matched ? '700' : '400';
+    const fs = matched ? '11' : '9.5';
+    const op = dimmed ? 0.08 : (matched ? 1 : 0.7);
+    s.push(`<text x="${lx}" y="${ly}" font-family="sans-serif" font-size="${fs}" font-weight="${fw}" fill="${fill}" opacity="${op}">${escXml(text)}</text>`);
+    labelCount++;
+  });
+
+  s.push('</g>'); // end chart group
+
+  // Region Legend
+  const legY = chartB + 64;
+  let legX = padX;
+  s.push(`<text x="${legX}" y="${legY}" font-family="sans-serif" font-size="11" font-weight="600" fill="#555550">Regions:</text>`);
+  legX += 62;
+  const activeRegions = Object.keys(REGION_COLORS).filter(r => !S.hiddenRegions.has(r));
+  activeRegions.forEach(r => {
+    if (legX > EW - 120) return; // overflow guard
+    s.push(`<circle cx="${legX}" cy="${legY-3.5}" r="5" fill="${REGION_COLORS[r]}"/>`);
+    s.push(`<text x="${legX+9}" y="${legY}" font-family="sans-serif" font-size="10.5" fill="#555550">${escXml(REGION_SHORT[r])}</text>`);
+    legX += REGION_SHORT[r].length * 6.5 + 24;
+  });
+
+  // Bubble Size Legend
+  if (S.sizeBy !== 'none') {
+    const sizeLegY = legY + 32;
+    let slx = padX;
+    s.push(`<text x="${slx}" y="${sizeLegY+4}" font-family="sans-serif" font-size="11" font-weight="600" fill="#555550">${S.sizeBy === 'population' ? 'Population' : 'GDP/cap'}:</text>`);
+    slx += 88;
+    const refVals = S.sizeBy === 'population' ? [10e6, 100e6, 500e6, 1.4e9] : [5000, 20000, 50000, 130000];
+    const refLabels = S.sizeBy === 'population' ? ['10M','100M','500M','1.4B'] : ['$5k','$20k','$50k','$130k'];
+    const rScale = S.sizeBy === 'population' ? erPop : erGdp;
+    refVals.forEach((v, i) => {
+      const r = Math.min(rScale(v), 26); // cap radius
+      s.push(`<circle cx="${slx}" cy="${sizeLegY}" r="${r}" fill="none" stroke="#999" stroke-width="0.8"/>`);
+      s.push(`<text x="${slx}" y="${sizeLegY+r+12}" font-family="sans-serif" font-size="9" fill="#888882" text-anchor="middle">${refLabels[i]}</text>`);
+      slx += Math.max(r * 2 + 16, 55);
+    });
+  }
+
+  // Source
+  s.push(`<text x="${padX}" y="${EH-12}" font-family="sans-serif" font-size="9.5" fill="#ABAAA2">${escXml('Source: UNU-WIDER, World Income Inequality Database (WIID) Companion dataset. Version 28 April 2025. https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425')}</text>`);
+
+  s.push('</svg>');
+  const svgStr = s.join('\n');
+
+  // --- Render to canvas at 2x DPI ---
+  const canvas = document.createElement('canvas');
+  canvas.width = EW * DPR;
+  canvas.height = EH * DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  function resetBtn(success) {
+    if (success) {
+      btn.textContent = '\u2713 Downloaded';
+      btn.classList.add('done');
+      setTimeout(() => { btn.disabled = false; btn.textContent = origText; btn.classList.remove('done'); }, 1800);
+    } else {
+      btn.disabled = false; btn.textContent = origText;
+    }
+  }
+
+  // Safety timeout — if image never loads, unlock button after 8s
+  const safetyTimer = setTimeout(() => { resetBtn(false); console.warn('Export: timed out'); }, 8000);
+
+  const img = new Image();
+  img.onerror = () => { clearTimeout(safetyTimer); resetBtn(false); console.error('Export: SVG render failed'); };
+  img.onload = () => {
+    clearTimeout(safetyTimer);
+    ctx.fillStyle = '#FAFAF7';
+    ctx.fillRect(0, 0, EW, EH);
+    ctx.drawImage(img, 0, 0, EW, EH);
+
+    canvas.toBlob(async pngBlob => {
+      if (!pngBlob) { resetBtn(false); console.error('Export: PNG encode failed'); return; }
+
+      // Tier 1: Native "Save As" dialog (Chrome/Edge — gives full folder selection)
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await showSaveFilePicker({
+            suggestedName: fileName,
+            types: [{ description: 'PNG Image', accept: { 'image/png': ['.png'] } }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(pngBlob);
+          await writable.close();
+          resetBtn(true);
+          return;
+        } catch (e) {
+          // User cancelled the dialog — not an error
+          if (e.name === 'AbortError') { resetBtn(false); return; }
+          // API failed — fall through to Tier 2
+        }
+      }
+
+      // Tier 2: <a download> (downloads to default folder)
+      try {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(pngBlob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        resetBtn(true);
+      } catch(e) {
+        // Tier 3: Inline overlay for sandboxed environments
+        const dataUrl = canvas.toDataURL('image/png');
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;cursor:pointer';
+        overlay.innerHTML = '<p style="color:#fff;font-family:sans-serif;font-size:14px">Right-click the image to save</p>'
+          + '<img src="' + dataUrl + '" style="max-width:92%;max-height:82%;border-radius:6px;box-shadow:0 4px 24px rgba(0,0,0,0.5)">';
+        overlay.addEventListener('click', () => overlay.remove());
+        document.body.appendChild(overlay);
+        resetBtn(true);
+      }
+    }, 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+}
+
+function escXml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 // ===== FULLSCREEN =====
 function toggleFullscreen() {
   const wrap = document.getElementById('chartWrap');
@@ -1645,7 +1967,7 @@ function bindEvents() {
     update(); stateToURL();
   });
   document.getElementById('xAxisSelect').addEventListener('change', e => { S.xAxis=e.target.value; update(); stateToURL(); });
-  document.getElementById('thresholdInput').addEventListener('change', e => { S.threshold=Math.min(80, Math.max(20, parseFloat(e.target.value)||50)); e.target.value=S.threshold; update(); stateToURL(); });
+  document.getElementById('thresholdInput').addEventListener('change', e => { S.threshold=Math.min(80, Math.max(20, parseFloat(e.target.value)||40)); e.target.value=S.threshold; update(); stateToURL(); });
   document.getElementById('sizeBySelect').addEventListener('change', e => { S.sizeBy=e.target.value; update(); stateToURL(); });
   document.getElementById('labelToggle').addEventListener('change', e => { S.showLabels=e.target.checked; render(false); stateToURL(); });
 
@@ -1670,6 +1992,38 @@ function bindEvents() {
   // Fullscreen
   document.getElementById('expandBtn').addEventListener('click', toggleFullscreen);
   document.getElementById('fsOverlay').addEventListener('click', toggleFullscreen);
+
+  // Download — native Save As dialog (Chrome/Edge) vs filename popover (Firefox/Safari)
+  const dlPop = document.getElementById('dlPop');
+  const dlInput = document.getElementById('dlFilename');
+  const hasNativeSaveAs = !!window.showSaveFilePicker;
+  if (hasNativeSaveAs) document.getElementById('downloadBtn').title = 'Save chart as image (pick folder & filename)';
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    if (hasNativeSaveAs) {
+      // Chrome/Edge: go straight to OS dialog (handles filename + folder)
+      downloadChart(`inequality-${S.baseYear}-${S.finalYear}`);
+      return;
+    }
+    // Firefox/Safari: show popover for filename editing
+    const isOpen = !dlPop.classList.contains('hidden');
+    if (isOpen) { dlPop.classList.add('hidden'); return; }
+    dlInput.value = `inequality-${S.baseYear}-${S.finalYear}`;
+    dlPop.classList.remove('hidden');
+    dlInput.focus();
+    dlInput.select();
+  });
+  document.getElementById('dlConfirm').addEventListener('click', () => {
+    dlPop.classList.add('hidden');
+    downloadChart(dlInput.value.trim() || `inequality-${S.baseYear}-${S.finalYear}`);
+  });
+  dlInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('dlConfirm').click(); }
+    if (e.key === 'Escape') { dlPop.classList.add('hidden'); }
+  });
+  document.addEventListener('click', e => {
+    if (!dlPop.classList.contains('hidden') && !e.target.closest('.dl-wrap')) dlPop.classList.add('hidden');
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && document.getElementById('chartWrap').classList.contains('fullscreen')) {
       toggleFullscreen();
