@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Income Inequality — Level & Change, 1990–2022</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F9F9F6;
+  --surface: #FFFFFF;
+  --surface-alt: #F3F2EE;
+  --border: #DAD8D0;
+  --border-light: #ECEAE4;
+  --text: #222220;
+  --text-mid: #555550;
+  --text-light: #888882;
+  --text-faint: #ABAAA2;
+  --accent: #BA3A1E;
+  --accent-light: #E8D5CF;
+
+  /* Region palette — tested for WCAG AA on white */
+  --c-eap: #3B6D8F;
+  --c-eca: #3A8660;
+  --c-lac: #C44536;
+  --c-mena: #C47F17;
+  --c-na: #5A8E8A;
+  --c-sa: #8856A7;
+  --c-ssa: #B8860B;
+
+  /* Quadrant fills */
+  --q-green: #E6F2EC;
+  --q-yellow: #FFF6E0;
+  --q-red: #FCEAE8;
+  --q-blue: #E8F0F8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 36px 80px;
+}
+
+/* === HEADER === */
+.header {
+  margin-bottom: 32px;
+}
+.header .kicker {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.header h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  font-size: 1.85rem;
+  line-height: 1.2;
+  color: var(--text);
+  max-width: 800px;
+  letter-spacing: -0.01em;
+}
+.header .dek {
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--text-mid);
+  margin-top: 8px;
+  max-width: 720px;
+  line-height: 1.55;
+}
+.header .divider {
+  width: 100%;
+  height: 3px;
+  background: var(--text);
+  margin-top: 16px;
+}
+
+/* === CONTROLS === */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+.ctrl {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ctrl label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.ctrl select, .ctrl input[type="text"], .ctrl input[type="number"] {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.84rem;
+  padding: 5px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+.ctrl select:focus, .ctrl input:focus { border-color: var(--accent); }
+.ctrl input[type="number"] { width: 68px; }
+.ctrl input[type="text"] { width: 190px; }
+
+.toggle-wrap {
+  display: flex; align-items: center; gap: 6px; padding-bottom: 2px;
+}
+.toggle-wrap label.tl { font-size: 0.82rem; font-weight: 400; color: var(--text-mid); text-transform: none; letter-spacing: 0; cursor: pointer; }
+.tsw { position: relative; width: 34px; height: 18px; cursor: pointer; }
+.tsw input { opacity: 0; width: 0; height: 0; }
+.tsw span { position: absolute; inset: 0; background: var(--border); border-radius: 9px; transition: 0.2s; }
+.tsw span::before { content:''; position: absolute; height: 12px; width: 12px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+.tsw input:checked + span { background: var(--accent); }
+.tsw input:checked + span::before { transform: translateX(16px); }
+
+/* Filter tags */
+.filter-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 24px; align-items: center; }
+.filter-tags .ftl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); font-weight: 600; }
+.ftag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 10px; background: var(--surface-alt); border-radius: 3px; font-size: 0.76rem; color: var(--text-mid); }
+.ftag .fx { cursor: pointer; color: var(--text-faint); line-height: 1; }
+.ftag .fx:hover { color: var(--accent); }
+.clear-btn { font-size: 0.76rem; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
+
+/* === CHART AREA === */
+.chart-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 20px 24px 16px;
+  margin-bottom: 8px;
+  position: relative;
+}
+.chart-wrap svg { cursor: grab; }
+.chart-wrap svg:active { cursor: grabbing; }
+.zoom-hint {
+  position: absolute;
+  bottom: 24px;
+  right: 28px;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.zoom-controls {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  display: flex;
+  gap: 4px;
+}
+.zoom-btn {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-mid);
+  transition: background 0.15s;
+}
+.zoom-btn:hover { background: var(--border-light); color: var(--text); }
+.zoom-btn.hidden { display: none; }
+
+/* Fullscreen mode */
+.chart-wrap.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  margin: 0;
+  padding: 16px 20px;
+  overflow: auto;
+  background: var(--surface);
+}
+.chart-wrap.fullscreen .zoom-controls { top: 16px; right: 20px; }
+.chart-wrap.fullscreen .zoom-hint { bottom: 16px; right: 20px; }
+.fs-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 9998;
+}
+.fs-overlay.active { display: block; }
+.count-bar {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.count-bar strong { color: var(--text); font-weight: 600; }
+
+/* Gini explainer */
+.gini-explainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--text-light);
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  background: var(--surface-alt);
+  border-radius: 4px;
+  line-height: 1.4;
+}
+.gini-explainer .info-icon {
+  flex-shrink: 0;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700;
+}
+
+/* === LEGEND (horizontal, below controls) === */
+.legend-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.legend-row .lr-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  margin-right: 4px;
+}
+.lr-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.78rem; color: var(--text-mid);
+  cursor: pointer; user-select: none; transition: opacity 0.15s;
+  padding: 2px 0;
+}
+.lr-item:hover { color: var(--text); }
+.lr-item.dimmed { opacity: 0.25; }
+.lr-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Tooltip */
+.tip {
+  position: fixed; pointer-events: none;
+  background: rgba(30,30,28,0.94); color: #fff;
+  padding: 12px 16px; border-radius: 6px;
+  font-size: 0.8rem; line-height: 1.55; max-width: 300px;
+  z-index: 1000; opacity: 0; transition: opacity 0.12s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.tip .tip-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+.tip .tip-r { display: flex; justify-content: space-between; gap: 14px; }
+.tip .tip-l { color: #AAA; }
+.tip .tip-v { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; }
+.tip .tip-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-size: 0.66rem; font-weight: 500; margin-top: 5px; }
+.tip .tip-badge.obs { background: rgba(58,134,96,0.25); color: #7AD4A8; }
+.tip .tip-badge.ext { background: rgba(186,58,30,0.2); color: #F2A899; }
+
+/* Axis labels */
+.ax-label { font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; font-weight: 500; fill: var(--text-mid); }
+/* Quadrant labels */
+.q-label { font-family: 'Source Sans 3', sans-serif; font-size: 11.5px; font-weight: 600; pointer-events: none; }
+/* Country labels on chart */
+.c-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 500; pointer-events: none; }
+/* === BELOW-CHART ANALYSIS === */
+.analysis-section {
+  margin-top: 40px;
+}
+.analysis-section h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--text);
+}
+
+/* Quadrant cards */
+.quad-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+.q-card {
+  border-radius: 6px;
+  padding: 18px 20px;
+  border-left: 4px solid;
+}
+.q-card h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.q-card .q-sub {
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  margin-bottom: 10px;
+  font-style: italic;
+}
+.q-card .q-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+}
+.q-card .q-big {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.q-card .q-stat-label {
+  font-size: 0.76rem;
+  color: var(--text-mid);
+}
+.q-card .q-regions {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+.q-card .q-reg-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--text-mid);
+  line-height: 1.8;
+}
+.q-reg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.q-reg-n { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 500; color: var(--text); }
+
+/* Key takeaways */
+.takeaways {
+  margin-bottom: 36px;
+}
+.takeaways h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.tk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tk-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+}
+.tk-num {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700;
+}
+.tk-text {
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+.tk-text strong { color: var(--text); font-weight: 600; }
+
+/* Biggest movers table */
+.movers-section {
+  margin-bottom: 36px;
+}
+.movers-section h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.movers-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.mover-block h4 {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mover-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.mover-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--border);
+}
+.mover-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-mid);
+}
+.mover-table td:first-child { font-weight: 500; color: var(--text); }
+.mover-table .chg-down { color: #2D7A50; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.mover-table .chg-up { color: #C44536; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+/* Regional summary */
+.regional-section { margin-bottom: 36px; }
+.regional-section h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.reg-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.reg-card {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  border-top: 3px solid var(--border);
+}
+.reg-card .rc-name { font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; }
+.reg-card .rc-stat { font-size: 0.76rem; color: var(--text-mid); line-height: 1.65; }
+.reg-card .rc-stat span { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); }
+
+/* Source / methodology */
+.source-block {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.source-block p {
+  font-size: 0.74rem;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+.source-block strong { color: var(--text-mid); }
+
+/* Hero stats */
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.hero-card {
+  padding: 20px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  text-align: center;
+}
+.hero-card.accent {
+  background: #C44536;
+  border-color: #C44536;
+  color: #fff;
+}
+.hero-card.accent .hero-label,
+.hero-card.accent .hero-sub { color: rgba(255,255,255,0.85); }
+.hero-card .hero-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+.hero-card .hero-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 2px;
+}
+.hero-card .hero-sub {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  line-height: 1.3;
+}
+
+/* Spotlight section */
+.spotlight-section { margin-bottom: 36px; }
+.spotlight-section h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.section-sub {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 14px;
+}
+.spotlight-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.spot-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 60px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+.spot-row .spot-name { font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot-row .spot-pop { font-size: 0.7rem; color: var(--text-faint); }
+.spot-bar-wrap {
+  position: relative;
+  height: 22px;
+  background: var(--surface-alt);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.spot-bar-1990 {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: rgba(0,0,0,0.08);
+  border-right: 2px dashed var(--text-faint);
+}
+.spot-bar-2022 {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  border-radius: 3px;
+}
+.spot-bar-label {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.spot-change {
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.spot-change.down { color: #2D7A50; }
+.spot-change.up { color: #C44536; }
+
+/* Movers filters */
+.movers-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.movers-filters .ctrl { flex: 0 0 auto; }
+.movers-filters select {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  font-family: inherit;
+}
+
+/* Counterfactual */
+.counterfactual {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #E8F0F8, #E6F2EC);
+  border-radius: 8px;
+  border-left: 4px solid #336B99;
+  margin-bottom: 36px;
+}
+.counterfactual h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #336B99;
+}
+.counterfactual p {
+  font-size: 0.88rem;
+  color: var(--text-mid);
+  line-height: 1.55;
+}
+.counterfactual .cf-big {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #336B99;
+  display: block;
+  margin: 8px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .page { padding: 20px 16px 60px; }
+  .header h1 { font-size: 1.45rem; }
+  .movers-grid { grid-template-columns: 1fr; }
+  .controls { gap: 10px; padding: 12px 14px; }
+  .hero-stats { grid-template-columns: 1fr; }
+  .hero-card .hero-num { font-size: 1.7rem; }
+  .spot-row { grid-template-columns: 100px 1fr 50px; }
+  .movers-filters { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Most countries reduced inequality since 1990 — but hundreds of millions are still being left&nbsp;behind</h1>
+    <p class="dek">Since 1990, most countries have reduced income inequality. But the gains are unevenly distributed — in South Asia and Sub-Saharan Africa, home to nearly half the world's population, many countries remain deeply unequal, and some are moving in the wrong direction.</p>
+    <div class="divider"></div>
+  </div>
+
+  <!-- HERO STAT -->
+  <div class="hero-stats" id="heroStats"></div>
+
+  <!-- CONTROLS -->
+  <div class="controls" id="controls">
+    <div class="ctrl">
+      <label>Region</label>
+      <select id="regionFilter"><option value="all">All Regions</option></select>
+    </div>
+    <div class="ctrl">
+      <label>Income Group</label>
+      <select id="incomeFilter"><option value="all">All Income Groups</option></select>
+    </div>
+    <div class="ctrl">
+      <label>X-Axis Year</label>
+      <select id="xYearSelect">
+        <option value="1990">Gini 1990</option>
+        <option value="2022">Gini 2022</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Threshold</label>
+      <input type="number" id="thresholdInput" value="50" min="20" max="80" step="1">
+    </div>
+    <div class="ctrl">
+      <label>Bubble Size</label>
+      <select id="sizeBySelect">
+        <option value="none">Uniform</option>
+        <option value="population">Population</option>
+        <option value="gdp">GDP per capita</option>
+      </select>
+    </div>
+    <div class="ctrl">
+      <label>Search Country</label>
+      <input type="text" id="searchInput" placeholder="e.g. Brazil, IND…">
+    </div>
+    <div class="ctrl">
+      <div class="toggle-wrap">
+        <label class="tsw"><input type="checkbox" id="labelToggle" checked><span></span></label>
+        <label class="tl" for="labelToggle">Labels</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER TAGS -->
+  <div class="filter-tags" id="filterTags"></div>
+
+  <!-- LEGEND (horizontal) -->
+  <div class="legend-row" id="legendRow">
+    <span class="lr-label">Regions</span>
+  </div>
+
+  <!-- GINI EXPLAINER -->
+  <div class="gini-explainer">
+    <span class="info-icon">i</span>
+    <span>The <strong>Gini index</strong> measures income inequality from 0 (everyone earns the same) to 100 (one person earns everything). A value above 50 indicates high inequality. The vertical axis shows how much each country's Gini changed between 1990 and 2022 — negative means inequality fell.</span>
+  </div>
+
+  <!-- COUNT -->
+  <div class="count-bar" id="countBar"></div>
+
+  <div class="fs-overlay" id="fsOverlay"></div>
+
+  <!-- CHART -->
+  <div class="chart-wrap" id="chartWrap">
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomInBtn" title="Zoom in">+</button>
+      <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">−</button>
+      <button class="zoom-btn hidden" id="resetZoomBtn">Reset zoom</button>
+      <button class="zoom-btn" id="expandBtn" title="Expand chart">⛶ Expand</button>
+    </div>
+    <div class="zoom-hint" id="zoomHint">Scroll to zoom · Drag to pan</div>
+  </div>
+
+  <!-- BELOW-CHART ANALYSIS -->
+  <div class="analysis-section" id="analysisSection">
+    <h2>What the data tells us</h2>
+
+    <!-- Quadrant cards -->
+    <div class="quad-cards" id="quadCards"></div>
+
+    <!-- Key takeaways (hierarchical: shock stat + supporting) -->
+    <div class="takeaways" id="takeaways">
+      <h3>Key findings</h3>
+      <div class="tk-list" id="tkList"></div>
+    </div>
+
+    <!-- Country spotlight: large population countries -->
+    <div class="spotlight-section">
+      <h3>Country spotlight — largest populations</h3>
+      <p class="section-sub">How the world's most populous countries changed, 1990–2022. Bars show Gini level; arrow shows direction of change.</p>
+      <div class="spotlight-grid" id="spotlightGrid"></div>
+    </div>
+
+    <!-- Biggest movers with filters -->
+    <div class="movers-section">
+      <h3>Biggest movers, 1990–2022</h3>
+      <div class="movers-filters">
+        <div class="ctrl">
+          <label>Region</label>
+          <select id="moverRegionFilter"><option value="all">All Regions</option></select>
+        </div>
+        <div class="ctrl">
+          <label>Income Group</label>
+          <select id="moverIncomeFilter"><option value="all">All Income Groups</option></select>
+        </div>
+      </div>
+      <div class="movers-grid" id="moversGrid"></div>
+    </div>
+
+    <!-- Regional summary (sorted by severity) -->
+    <div class="regional-section">
+      <h3>Regional snapshot — ranked by average inequality</h3>
+      <div class="reg-cards" id="regCards"></div>
+    </div>
+
+    <!-- Counterfactual -->
+    <div class="counterfactual" id="counterfactual"></div>
+  </div>
+
+  <!-- SOURCE -->
+  <div class="source-block">
+    <p><strong>Source:</strong> UNU-WIDER, World Income Inequality Database (WIID) Companion dataset (wiidcountry and/or wiidglobal). Version 28 April 2025. <a href="https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425" style="color:var(--text-mid)">https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425</a></p>
+    <p><strong>Methodology:</strong> Change is calculated as Gini(2022) − Gini(1990). The quadrant threshold is set at 50 by default but is configurable above. Gini values range from 0 (perfect equality) to 100 (maximum inequality).</p>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+// ===== DATA =====
+const RAW_DATA = [{"country": "Trinidad and Tobago", "c3": "TTO", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 1495921.0, "gdp": 31323.279, "gini_2022": 40.172001, "gini_1990": 41.404999, "gini_change": -1.2329979, "interpolated": "Extrapolated"}, {"country": "El Salvador", "c3": "SLV", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 6280319.0, "gdp": 11068.92, "gini_2022": 38.676998, "gini_1990": 48.0, "gini_change": -9.3230019, "interpolated": "No"}, {"country": "Grenada", "c3": "GRD", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 116913.0, "gdp": 16386.461, "gini_2022": 47.195, "gini_1990": 47.195, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Costa Rica", "c3": "CRI", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 5081765.0, "gdp": 25131.029, "gini_2022": 48.328999, "gini_1990": 44.971001, "gini_change": 3.3579979, "interpolated": "No"}, {"country": "Bahamas, The", "c3": "BHS", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 397538.0, "gdp": 32408.711, "gini_2022": 50.037998, "gini_1990": 50.388, "gini_change": -0.35000229, "interpolated": "Extrapolated"}, {"country": "Guyana", "c3": "GUY", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 821637.0, "gdp": 37068.199, "gini_2022": 44.851002, "gini_1990": 51.629002, "gini_change": -6.7779999, "interpolated": "Extrapolated"}, {"country": "Argentina", "c3": "ARG", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 45407904.0, "gdp": 27627.961, "gini_2022": 37.715, "gini_1990": 44.242001, "gini_change": -6.5270004, "interpolated": "No"}, {"country": "Belize", "c3": "BLZ", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 402733.0, "gdp": 12569.82, "gini_2022": 53.048, "gini_1990": 59.182999, "gini_change": -6.1349983, "interpolated": "Extrapolated"}, {"country": "United States", "c3": "USA", "region_wb": "North America", "region_un": "Americas", "incomegroup": "High income", "population": 341534016.0, "gdp": 72841.922, "gini_2022": 39.706001, "gini_1990": 37.919998, "gini_change": 1.7860031, "interpolated": "No"}, {"country": "Cuba", "c3": "CUB", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 11059820.0, "gdp": 9178.4697, "gini_2022": 48.265999, "gini_1990": 48.265999, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Peru", "c3": "PER", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 33475438.0, "gdp": 15548.93, "gini_2022": 41.238998, "gini_1990": 52.741001, "gini_change": -11.502003, "interpolated": "No"}, {"country": "Turks and Caicos Islands", "c3": "TCA", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 45847.0, "gdp": 22209.91, "gini_2022": 46.860001, "gini_1990": 50.998001, "gini_change": -4.1380005, "interpolated": "Extrapolated"}, {"country": "Nicaragua", "c3": "NIC", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Lower middle income", "population": 6730654.0, "gdp": 7258.6802, "gini_2022": 49.130001, "gini_1990": 56.633999, "gini_change": -7.5039978, "interpolated": "Extrapolated"}, {"country": "Haiti", "c3": "HTI", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Lower middle income", "population": 11503606.0, "gdp": 3047.6499, "gini_2022": 60.297001, "gini_1990": 58.708, "gini_change": 1.5890007, "interpolated": "Extrapolated"}, {"country": "Saint Kitts and Nevis", "c3": "KNA", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 46709.0, "gdp": 29761.279, "gini_2022": 46.860001, "gini_1990": 50.998001, "gini_change": -4.1380005, "interpolated": "Extrapolated"}, {"country": "Bolivia", "c3": "BOL", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Lower middle income", "population": 12077154.0, "gdp": 9681.71, "gini_2022": 41.692001, "gini_1990": 51.796001, "gini_change": -10.104, "interpolated": "Extrapolated"}, {"country": "Paraguay", "c3": "PRY", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 6760464.0, "gdp": 15259.15, "gini_2022": 48.194, "gini_1990": 51.719002, "gini_change": -3.5250015, "interpolated": "No"}, {"country": "Jamaica", "c3": "JAM", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 2839144.0, "gdp": 10072.05, "gini_2022": 47.445999, "gini_1990": 51.807999, "gini_change": -4.3619995, "interpolated": "Extrapolated"}, {"country": "Venezuela", "c3": "VEN", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Missing", "population": 28213018.0, "gdp": 6320.6299, "gini_2022": 37.526001, "gini_1990": 36.98, "gini_change": 0.54600143, "interpolated": "Extrapolated"}, {"country": "Brazil", "c3": "BRA", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 210306416.0, "gdp": 18554.051, "gini_2022": 47.999001, "gini_1990": 55.169998, "gini_change": -7.1709976, "interpolated": "No"}, {"country": "Saint Vincent and the Grenadines", "c3": "VCT", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 102046.0, "gdp": 17172.211, "gini_2022": 46.047001, "gini_1990": 52.411999, "gini_change": -6.3649979, "interpolated": "Extrapolated"}, {"country": "Puerto Rico", "c3": "PRI", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 3240968.0, "gdp": 42562.379, "gini_2022": 52.737, "gini_1990": 51.216999, "gini_change": 1.5200005, "interpolated": "Extrapolated"}, {"country": "Uruguay", "c3": "URY", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 3390913.0, "gdp": 30879.93, "gini_2022": 41.339001, "gini_1990": 43.048, "gini_change": -1.7089996, "interpolated": "No"}, {"country": "Dominican Republic", "c3": "DOM", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 11230734.0, "gdp": 22757.391, "gini_2022": 38.006001, "gini_1990": 50.249001, "gini_change": -12.243, "interpolated": "No"}, {"country": "Guatemala", "c3": "GTM", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 17847876.0, "gdp": 12153.03, "gini_2022": 47.917, "gini_1990": 58.098, "gini_change": -10.181, "interpolated": "Extrapolated"}, {"country": "Greenland", "c3": "GRL", "region_wb": "Europe and Central Asia", "region_un": "Americas", "incomegroup": "High income", "population": 55990.0, "gdp": 70865.438, "gini_2022": 35.917999, "gini_1990": 34.092999, "gini_change": 1.8250008, "interpolated": "Extrapolated"}, {"country": "Mexico", "c3": "MEX", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 128613120.0, "gdp": 21643.971, "gini_2022": 43.918999, "gini_1990": 52.118, "gini_change": -8.1990013, "interpolated": "No"}, {"country": "Honduras", "c3": "HND", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Lower middle income", "population": 10463872.0, "gdp": 6352.5898, "gini_2022": 48.979, "gini_1990": 56.84, "gini_change": -7.8610001, "interpolated": "Extrapolated"}, {"country": "Suriname", "c3": "SUR", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 623164.0, "gdp": 18742.59, "gini_2022": 57.34, "gini_1990": 51.665001, "gini_change": 5.6749992, "interpolated": "Extrapolated"}, {"country": "Saint Lucia", "c3": "LCA", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 178781.0, "gdp": 22961.961, "gini_2022": 50.977001, "gini_1990": 42.466, "gini_change": 8.5110016, "interpolated": "Extrapolated"}, {"country": "Panama", "c3": "PAN", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 4400773.0, "gdp": 33833.031, "gini_2022": 49.695999, "gini_1990": 56.016998, "gini_change": -6.3209991, "interpolated": "No"}, {"country": "Barbados", "c3": "BRB", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 282318.0, "gdp": 18469.58, "gini_2022": 56.485001, "gini_1990": 50.882, "gini_change": 5.6030006, "interpolated": "Extrapolated"}, {"country": "Canada", "c3": "CAN", "region_wb": "North America", "region_un": "Americas", "incomegroup": "High income", "population": 38821256.0, "gdp": 56872.609, "gini_2022": 29.865, "gini_1990": 31.834999, "gini_change": -1.9699993, "interpolated": "Extrapolated"}, {"country": "Colombia", "c3": "COL", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 51737944.0, "gdp": 18788.41, "gini_2022": 55.073002, "gini_1990": 52.532001, "gini_change": 2.5410004, "interpolated": "No"}, {"country": "Ecuador", "c3": "ECU", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 17823896.0, "gdp": 14263.2, "gini_2022": 44.518002, "gini_1990": 45.679001, "gini_change": -1.1609993, "interpolated": "No"}, {"country": "Chile", "c3": "CHL", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "High income", "population": 19553036.0, "gdp": 29557.391, "gini_2022": 46.598, "gini_1990": 52.734001, "gini_change": -6.1360016, "interpolated": "No"}, {"country": "Dominica", "c3": "DMA", "region_wb": "Latin America and the Caribbean", "region_un": "Americas", "incomegroup": "Upper middle income", "population": 66826.0, "gdp": 16557.641, "gini_2022": 56.174999, "gini_1990": 56.174999, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Greece", "c3": "GRC", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 10412480.0, "gdp": 35956.25, "gini_2022": 32.306999, "gini_1990": 34.923, "gini_change": -2.6160011, "interpolated": "No"}, {"country": "Latvia", "c3": "LVA", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 1881063.0, "gdp": 36348.809, "gini_2022": 34.536999, "gini_1990": 27.002001, "gini_change": 7.5349979, "interpolated": "No"}, {"country": "Romania", "c3": "ROU", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 19166772.0, "gdp": 39733.66, "gini_2022": 34.131001, "gini_1990": 24.042999, "gini_change": 10.088001, "interpolated": "No"}, {"country": "Belgium", "c3": "BEL", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 11641820.0, "gdp": 63974.25, "gini_2022": 26.788, "gini_1990": 25.315001, "gini_change": 1.4729996, "interpolated": "No"}, {"country": "Montenegro", "c3": "MNE", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 614648.0, "gdp": 26164.631, "gini_2022": 33.966999, "gini_1990": 28.179001, "gini_change": 5.7879982, "interpolated": "Extrapolated"}, {"country": "Netherlands", "c3": "NLD", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 17904422.0, "gdp": 72103.867, "gini_2022": 26.108999, "gini_1990": 30.478001, "gini_change": -4.3690014, "interpolated": "No"}, {"country": "Moldova", "c3": "MDA", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 3039985.0, "gdp": 15291.13, "gini_2022": 34.185001, "gini_1990": 36.514, "gini_change": -2.3289986, "interpolated": "Extrapolated"}, {"country": "Malta", "c3": "MLT", "region_wb": "Middle East and North Africa", "region_un": "Europe", "incomegroup": "High income", "population": 528192.0, "gdp": 59133.77, "gini_2022": 31.618999, "gini_1990": 28.754, "gini_change": 2.8649998, "interpolated": "No"}, {"country": "Estonia", "c3": "EST", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 1350091.0, "gdp": 44492.121, "gini_2022": 31.912001, "gini_1990": 31.622999, "gini_change": 0.28900146, "interpolated": "No"}, {"country": "Portugal", "c3": "PRT", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 10417073.0, "gdp": 41288.051, "gini_2022": 34.591999, "gini_1990": 32.915001, "gini_change": 1.6769981, "interpolated": "No"}, {"country": "North Macedonia", "c3": "MKD", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 1840233.0, "gdp": 23056.5, "gini_2022": 33.242001, "gini_1990": 28.179001, "gini_change": 5.0629997, "interpolated": "Extrapolated"}, {"country": "France", "c3": "FRA", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 66277408.0, "gdp": 55106.328, "gini_2022": 31.555, "gini_1990": 32.229, "gini_change": -0.67399979, "interpolated": "No"}, {"country": "Sweden", "c3": "SWE", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 10487338.0, "gdp": 63611.359, "gini_2022": 31.68, "gini_1990": 24.299999, "gini_change": 7.3800011, "interpolated": "No"}, {"country": "Croatia", "c3": "HRV", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 3907027.0, "gdp": 39844.141, "gini_2022": 28.931, "gini_1990": 28.179001, "gini_change": 0.7519989, "interpolated": "No"}, {"country": "Kosovo", "c3": "XKX", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 1717946.0, "gdp": 13022.46, "gini_2022": 29.305, "gini_1990": 28.179001, "gini_change": 1.1259995, "interpolated": "Extrapolated"}, {"country": "Albania", "c3": "ALB", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 2827608.0, "gdp": 17352.85, "gini_2022": 34.5, "gini_1990": 32.310001, "gini_change": 2.1899986, "interpolated": "Extrapolated"}, {"country": "Spain", "c3": "ESP", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 47828384.0, "gdp": 46479.09, "gini_2022": 33.889999, "gini_1990": 32.396, "gini_change": 1.4939995, "interpolated": "No"}, {"country": "Hungary", "c3": "HUN", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 9684306.0, "gdp": 40693.961, "gini_2022": 26.472, "gini_1990": 27.040001, "gini_change": -0.56800079, "interpolated": "No"}, {"country": "United Kingdom", "c3": "GBR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 68179312.0, "gdp": 54805.449, "gini_2022": 32.483002, "gini_1990": 34.317001, "gini_change": -1.8339996, "interpolated": "No"}, {"country": "Bulgaria", "c3": "BGR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 6825864.0, "gdp": 31813.939, "gini_2022": 39.014, "gini_1990": 24.534, "gini_change": 14.48, "interpolated": "No"}, {"country": "Poland", "c3": "POL", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 38385740.0, "gdp": 44160.859, "gini_2022": 31.492001, "gini_1990": 28.854, "gini_change": 2.6380005, "interpolated": "No"}, {"country": "Czechia", "c3": "CZE", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 10673213.0, "gdp": 50617.699, "gini_2022": 26.445999, "gini_1990": 21.142, "gini_change": 5.3039989, "interpolated": "No"}, {"country": "Russia", "c3": "RUS", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 145579904.0, "gdp": 38263.621, "gini_2022": 34.178001, "gini_1990": 36.655998, "gini_change": -2.4779968, "interpolated": "No"}, {"country": "Finland", "c3": "FIN", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 5569299.0, "gdp": 58024.48, "gini_2022": 28.691999, "gini_1990": 22.716, "gini_change": 5.9759998, "interpolated": "No"}, {"country": "Slovakia", "c3": "SVK", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 5473197.0, "gdp": 38720.48, "gini_2022": 24.172001, "gini_1990": 21.618999, "gini_change": 2.5530014, "interpolated": "No"}, {"country": "Norway", "c3": "NOR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 5456801.0, "gdp": 91068.602, "gini_2022": 29.34, "gini_1990": 25.08, "gini_change": 4.2600002, "interpolated": "Extrapolated"}, {"country": "Germany", "c3": "DEU", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 84086224.0, "gdp": 63353.941, "gini_2022": 30.599001, "gini_1990": 28.641001, "gini_change": 1.9580002, "interpolated": "No"}, {"country": "Italy", "c3": "ITA", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 59619112.0, "gdp": 52924.609, "gini_2022": 35.644001, "gini_1990": 31.582001, "gini_change": 4.0620003, "interpolated": "No"}, {"country": "Switzerland", "c3": "CHE", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 8792182.0, "gdp": 83007.281, "gini_2022": 33.806999, "gini_1990": 35.757999, "gini_change": -1.9510002, "interpolated": "No"}, {"country": "Slovenia", "c3": "SVN", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 2115228.0, "gdp": 47433.398, "gini_2022": 25.066, "gini_1990": 28.179001, "gini_change": -3.1130009, "interpolated": "No"}, {"country": "Denmark", "c3": "DNK", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 5902904.0, "gdp": 70865.438, "gini_2022": 29.594999, "gini_1990": 25.466, "gini_change": 4.1289997, "interpolated": "No"}, {"country": "Austria", "c3": "AUT", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 9064677.0, "gdp": 66294.719, "gini_2022": 30.882999, "gini_1990": 25.955999, "gini_change": 4.927, "interpolated": "No"}, {"country": "Ireland", "c3": "IRL", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 5110016.0, "gdp": 124991.3, "gini_2022": 30.697001, "gini_1990": 36.199001, "gini_change": -5.5020008, "interpolated": "No"}, {"country": "Iceland", "c3": "ISL", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 380356.0, "gdp": 65932.133, "gini_2022": 26.709, "gini_1990": 26.698999, "gini_change": 0.010000229, "interpolated": "Extrapolated"}, {"country": "Ukraine", "c3": "UKR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 41048764.0, "gdp": 13787.12, "gini_2022": 34.063, "gini_1990": 30.351, "gini_change": 3.7119999, "interpolated": "Extrapolated"}, {"country": "San Marino", "c3": "SMR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 34090.0, "gdp": 70887.57, "gini_2022": 32.333, "gini_1990": 31.535999, "gini_change": 0.79700089, "interpolated": "Extrapolated"}, {"country": "Luxembourg", "c3": "LUX", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 653313.0, "gdp": 137059.19, "gini_2022": 33.359001, "gini_1990": 27.055, "gini_change": 6.3040009, "interpolated": "No"}, {"country": "Belarus", "c3": "BLR", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 9173237.0, "gdp": 26537.51, "gini_2022": 33.119999, "gini_1990": 24.344, "gini_change": 8.7759991, "interpolated": "Extrapolated"}, {"country": "Andorra", "c3": "AND", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 79705.0, "gdp": 63913.379, "gini_2022": 30.464001, "gini_1990": 29.877001, "gini_change": 0.58699989, "interpolated": "Extrapolated"}, {"country": "Serbia", "c3": "SRB", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 6791213.0, "gdp": 24910.42, "gini_2022": 31.715, "gini_1990": 28.179001, "gini_change": 3.5359993, "interpolated": "No"}, {"country": "Lithuania", "c3": "LTU", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "High income", "population": 2816919.0, "gdp": 47238.102, "gini_2022": 36.633999, "gini_1990": 32.957001, "gini_change": 3.6769981, "interpolated": "No"}, {"country": "Bosnia and Herzegovina", "c3": "BIH", "region_wb": "Europe and Central Asia", "region_un": "Europe", "incomegroup": "Upper middle income", "population": 3204802.0, "gdp": 19569.77, "gini_2022": 36.450001, "gini_1990": 28.179001, "gini_change": 8.2709999, "interpolated": "Extrapolated"}, {"country": "Guinea-Bissau", "c3": "GNB", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 2105529.0, "gdp": 2507.01, "gini_2022": 49.195999, "gini_1990": 65.841003, "gini_change": -16.645004, "interpolated": "No"}, {"country": "Lesotho", "c3": "LSO", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 2286110.0, "gdp": 2577.55, "gini_2022": 58.113998, "gini_1990": 68.132004, "gini_change": -10.018005, "interpolated": "Extrapolated"}, {"country": "Cote d'Ivoire", "c3": "CIV", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 30395002.0, "gdp": 6261.5298, "gini_2022": 54.414001, "gini_1990": 55.393002, "gini_change": -0.97900009, "interpolated": "No"}, {"country": "Comoros", "c3": "COM", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 834188.0, "gdp": 3463.01, "gini_2022": 58.539001, "gini_1990": 66.308998, "gini_change": -7.7699966, "interpolated": "Extrapolated"}, {"country": "Namibia", "c3": "NAM", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 2889662.0, "gdp": 9948.46, "gini_2022": 61.765999, "gini_1990": 73.188004, "gini_change": -11.422005, "interpolated": "Extrapolated"}, {"country": "Kenya", "c3": "KEN", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 54252460.0, "gdp": 5491.6899, "gini_2022": 53.202999, "gini_1990": 65.577003, "gini_change": -12.374004, "interpolated": "Extrapolated"}, {"country": "Malawi", "c3": "MWI", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 20568728.0, "gdp": 1659.96, "gini_2022": 53.136002, "gini_1990": 61.903999, "gini_change": -8.7679977, "interpolated": "Extrapolated"}, {"country": "Mozambique", "c3": "MOZ", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 32656246.0, "gdp": 1476.67, "gini_2022": 62.159, "gini_1990": 59.473999, "gini_change": 2.6850014, "interpolated": "Extrapolated"}, {"country": "Senegal", "c3": "SEN", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 17651104.0, "gdp": 4227.73, "gini_2022": 51.203999, "gini_1990": 64.532997, "gini_change": -13.328999, "interpolated": "No"}, {"country": "Sierra Leone", "c3": "SLE", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 8276806.5, "gdp": 2934.03, "gini_2022": 50.895, "gini_1990": 70.681, "gini_change": -19.785999, "interpolated": "Extrapolated"}, {"country": "Eswatini", "c3": "SWZ", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 1218917.0, "gdp": 9740.0703, "gini_2022": 65.574997, "gini_1990": 68.303001, "gini_change": -2.7280045, "interpolated": "Extrapolated"}, {"country": "Zimbabwe", "c3": "ZWE", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 16069056.0, "gdp": 3323.1201, "gini_2022": 57.532001, "gini_1990": 72.911003, "gini_change": -15.379002, "interpolated": "Extrapolated"}, {"country": "Angola", "c3": "AGO", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 35635028.0, "gdp": 7397.4902, "gini_2022": 62.707001, "gini_1990": 63.145, "gini_change": -0.43799973, "interpolated": "Extrapolated"}, {"country": "Congo, Republic of the", "c3": "COG", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 6035104.0, "gdp": 6205.1001, "gini_2022": 61.165001, "gini_1990": 59.979, "gini_change": 1.1860008, "interpolated": "Extrapolated"}, {"country": "Mali", "c3": "MLI", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 23072640.0, "gdp": 2357.1899, "gini_2022": 39.060001, "gini_1990": 54.194, "gini_change": -15.133999, "interpolated": "Extrapolated"}, {"country": "Seychelles", "c3": "SYC", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "High income", "population": 125522.0, "gdp": 28540.76, "gini_2022": 32.026001, "gini_1990": 53.798, "gini_change": -21.771999, "interpolated": "Extrapolated"}, {"country": "Botswana", "c3": "BWA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 2439892.0, "gdp": 18648.131, "gini_2022": 56.993, "gini_1990": 59.887001, "gini_change": -2.894001, "interpolated": "Extrapolated"}, {"country": "Burundi", "c3": "BDI", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 13321097.0, "gdp": 829.39001, "gini_2022": 52.325001, "gini_1990": 49.157001, "gini_change": 3.1679993, "interpolated": "Extrapolated"}, {"country": "Nigeria", "c3": "NGA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 223150896.0, "gdp": 5552.8398, "gini_2022": 35.595001, "gini_1990": 54.064999, "gini_change": -18.469997, "interpolated": "Extrapolated"}, {"country": "Egypt", "c3": "EGY", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 112618248.0, "gdp": 16360.39, "gini_2022": 35.419998, "gini_1990": 37.806999, "gini_change": -2.387001, "interpolated": "Extrapolated"}, {"country": "Gabon", "c3": "GAB", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 2430747.0, "gdp": 18662.051, "gini_2022": 45.004002, "gini_1990": 57.898998, "gini_change": -12.894997, "interpolated": "Extrapolated"}, {"country": "Tanzania", "c3": "TZA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 64711820.0, "gdp": 3546.98, "gini_2022": 54.536999, "gini_1990": 51.237, "gini_change": 3.2999992, "interpolated": "Extrapolated"}, {"country": "Cameroon", "c3": "CMR", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 27632772.0, "gdp": 4843.6499, "gini_2022": 55.973, "gini_1990": 57.591, "gini_change": -1.618, "interpolated": "No"}, {"country": "Eritrea", "c3": "ERI", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 3409447.0, "gdp": 2655.5801, "gini_2022": 54.534, "gini_1990": 54.534, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Chad", "c3": "TCD", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 18455316.0, "gdp": 1688.46, "gini_2022": 52.278, "gini_1990": 49.442001, "gini_change": 2.8359985, "interpolated": "No"}, {"country": "Congo, Democratic Republic of the", "c3": "COD", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 102396968.0, "gdp": 1385.46, "gini_2022": 57.916, "gini_1990": 55.626999, "gini_change": 2.2890015, "interpolated": "Extrapolated"}, {"country": "Liberia", "c3": "LBR", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 5373294.0, "gdp": 1579.0, "gini_2022": 50.679001, "gini_1990": 51.573002, "gini_change": -0.89400101, "interpolated": "Extrapolated"}, {"country": "South Sudan", "c3": "SSD", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 11021177.0, "gdp": 3132.0801, "gini_2022": 57.563, "gini_1990": 53.914001, "gini_change": 3.6489983, "interpolated": "Extrapolated"}, {"country": "Togo", "c3": "TGO", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 9089738.0, "gdp": 2662.26, "gini_2022": 52.651001, "gini_1990": 56.104, "gini_change": -3.4529991, "interpolated": "No"}, {"country": "Niger", "c3": "NER", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 25311972.0, "gdp": 1717.52, "gini_2022": 48.631001, "gini_1990": 49.849998, "gini_change": -1.218998, "interpolated": "No"}, {"country": "Guinea", "c3": "GIN", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 14055137.0, "gdp": 3792.01, "gini_2022": 46.194, "gini_1990": 57.859001, "gini_change": -11.665001, "interpolated": "Extrapolated"}, {"country": "South Africa", "c3": "ZAF", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 62378412.0, "gdp": 13777.19, "gini_2022": 66.918999, "gini_1990": 68.786003, "gini_change": -1.8670044, "interpolated": "Extrapolated"}, {"country": "Algeria", "c3": "DZA", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 45477392.0, "gdp": 14782.2, "gini_2022": 28.929001, "gini_1990": 36.174, "gini_change": -7.2449989, "interpolated": "Extrapolated"}, {"country": "Ghana", "c3": "GHA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 33149152.0, "gdp": 6729.27, "gini_2022": 57.083, "gini_1990": 51.826, "gini_change": 5.257, "interpolated": "Extrapolated"}, {"country": "Burkina Faso", "c3": "BFA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 22509038.0, "gdp": 2466.05, "gini_2022": 52.261002, "gini_1990": 60.425999, "gini_change": -8.1649971, "interpolated": "No"}, {"country": "Central African Republic", "c3": "CAF", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 5098039.0, "gdp": 1137.35, "gini_2022": 56.747002, "gini_1990": 69.191002, "gini_change": -12.444, "interpolated": "Extrapolated"}, {"country": "Morocco", "c3": "MAR", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 37329064.0, "gdp": 8666.0801, "gini_2022": 43.120998, "gini_1990": 42.417999, "gini_change": 0.70299911, "interpolated": "Extrapolated"}, {"country": "Sudan", "c3": "SDN", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 49383348.0, "gdp": 3132.0801, "gini_2022": 53.449001, "gini_1990": 51.529999, "gini_change": 1.9190025, "interpolated": "Extrapolated"}, {"country": "Equatorial Guinea", "c3": "GNQ", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 1803545.0, "gdp": 16932.77, "gini_2022": 54.883999, "gini_1990": 54.883999, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Uganda", "c3": "UGA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 47312720.0, "gdp": 2724.9099, "gini_2022": 56.328999, "gini_1990": 57.236, "gini_change": -0.9070015, "interpolated": "Extrapolated"}, {"country": "Zambia", "c3": "ZMB", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 20152938.0, "gdp": 3585.1201, "gini_2022": 66.321999, "gini_1990": 67.591003, "gini_change": -1.2690048, "interpolated": "Extrapolated"}, {"country": "Benin", "c3": "BEN", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 13759501.0, "gdp": 3588.3401, "gini_2022": 49.862, "gini_1990": 50.756001, "gini_change": -0.89400101, "interpolated": "No"}, {"country": "Sao Tome and Principe", "c3": "STP", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 226305.0, "gdp": 5632.1401, "gini_2022": 54.828999, "gini_1990": 48.106998, "gini_change": 6.7220001, "interpolated": "Extrapolated"}, {"country": "Madagascar", "c3": "MDG", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 30437262.0, "gdp": 1622.61, "gini_2022": 56.411999, "gini_1990": 58.558998, "gini_change": -2.1469994, "interpolated": "Extrapolated"}, {"country": "Rwanda", "c3": "RWA", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 13651030.0, "gdp": 2889.8799, "gini_2022": 57.167, "gini_1990": 50.325001, "gini_change": 6.8419991, "interpolated": "Extrapolated"}, {"country": "Tunisia", "c3": "TUN", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 12119334.0, "gdp": 12632.04, "gini_2022": 40.674, "gini_1990": 46.722, "gini_change": -6.0480003, "interpolated": "No"}, {"country": "Mauritius", "c3": "MUS", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 1276130.0, "gdp": 24831.369, "gini_2022": 46.449001, "gini_1990": 45.486, "gini_change": 0.96300125, "interpolated": "Extrapolated"}, {"country": "Libya", "c3": "LBY", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Upper middle income", "population": 7223805.0, "gdp": 11456.08, "gini_2022": 34.973999, "gini_1990": 40.442001, "gini_change": -5.4680023, "interpolated": "Extrapolated"}, {"country": "Ethiopia", "c3": "ETH", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 125384288.0, "gdp": 2655.5801, "gini_2022": 50.469002, "gini_1990": 57.483002, "gini_change": -7.0139999, "interpolated": "Extrapolated"}, {"country": "Cape Verde", "c3": "CPV", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 519741.03125, "gdp": 8850.1104, "gini_2022": 56.212002, "gini_1990": 63.903, "gini_change": -7.6909981, "interpolated": "Extrapolated"}, {"country": "Gambia, The", "c3": "GMB", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 2636470.0, "gdp": 2863.1799, "gini_2022": 53.369999, "gini_1990": 69.948997, "gini_change": -16.578999, "interpolated": "Extrapolated"}, {"country": "Mauritania", "c3": "MRT", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 4875637.0, "gdp": 6053.2598, "gini_2022": 48.044998, "gini_1990": 59.348999, "gini_change": -11.304001, "interpolated": "Extrapolated"}, {"country": "Djibouti", "c3": "DJI", "region_wb": "Middle East and North Africa", "region_un": "Africa", "incomegroup": "Lower middle income", "population": 1137096.0, "gdp": 6083.6401, "gini_2022": 44.830002, "gini_1990": 50.266998, "gini_change": -5.4369965, "interpolated": "Extrapolated"}, {"country": "Somalia", "c3": "SOM", "region_wb": "Sub-Saharan Africa", "region_un": "Africa", "incomegroup": "Low income", "population": 17801896.0, "gdp": 1387.8101, "gini_2022": 54.810001, "gini_1990": 47.381001, "gini_change": 7.4290009, "interpolated": "Extrapolated"}, {"country": "Yemen", "c3": "YEM", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Low income", "population": 38222876.0, "gdp": 2351.1899, "gini_2022": 39.493999, "gini_1990": 41.664001, "gini_change": -2.170002, "interpolated": "Extrapolated"}, {"country": "Bhutan", "c3": "BTN", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 780914.0, "gdp": 14061.31, "gini_2022": 43.310001, "gini_1990": 52.998001, "gini_change": -9.6879997, "interpolated": "No"}, {"country": "Syria", "c3": "SYR", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Low income", "population": 22462174.0, "gdp": 4454.8501, "gini_2022": 35.116001, "gini_1990": 36.955002, "gini_change": -1.8390007, "interpolated": "Extrapolated"}, {"country": "Jordan", "c3": "JOR", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 11256263.0, "gdp": 9266.5801, "gini_2022": 40.042999, "gini_1990": 44.919998, "gini_change": -4.8769989, "interpolated": "Extrapolated"}, {"country": "Oman", "c3": "OMN", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 4730226.0, "gdp": 40366.461, "gini_2022": 39.735001, "gini_1990": 43.651001, "gini_change": -3.9160004, "interpolated": "Extrapolated"}, {"country": "Turkmenistan", "c3": "TKM", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 7230193.0, "gdp": 17119.57, "gini_2022": 46.015999, "gini_1990": 35.779999, "gini_change": 10.236, "interpolated": "Extrapolated"}, {"country": "Japan", "c3": "JPN", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 124997576.0, "gdp": 45174.73, "gini_2022": 32.368999, "gini_1990": 32.354, "gini_change": 0.01499939, "interpolated": "Extrapolated"}, {"country": "Armenia", "c3": "ARM", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 2880874.0, "gdp": 17886.18, "gini_2022": 35.951, "gini_1990": 44.143002, "gini_change": -8.1920013, "interpolated": "No"}, {"country": "Korea, Republic of", "c3": "KOR", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 51782512.0, "gdp": 49933.98, "gini_2022": 32.976002, "gini_1990": 34.592999, "gini_change": -1.6169968, "interpolated": "Extrapolated"}, {"country": "Cyprus", "c3": "CYP", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "High income", "population": 1331370.0, "gdp": 52882.289, "gini_2022": 31.202999, "gini_1990": 30.045, "gini_change": 1.157999, "interpolated": "No"}, {"country": "Tajikistan", "c3": "TJK", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 10182222.0, "gdp": 4213.7598, "gini_2022": 35.566002, "gini_1990": 32.150002, "gini_change": 3.4160004, "interpolated": "Extrapolated"}, {"country": "Malaysia", "c3": "MYS", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 34695492.0, "gdp": 32079.15, "gini_2022": 40.534, "gini_1990": 46.456001, "gini_change": -5.9220009, "interpolated": "No"}, {"country": "Afghanistan", "c3": "AFG", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Low income", "population": 40578844.0, "gdp": 1981.71, "gini_2022": 44.967999, "gini_1990": 44.353001, "gini_change": 0.61499786, "interpolated": "Extrapolated"}, {"country": "Myanmar", "c3": "MMR", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 53756784.0, "gdp": 5350.48, "gini_2022": 34.125999, "gini_1990": 36.507999, "gini_change": -2.382, "interpolated": "Extrapolated"}, {"country": "Kuwait", "c3": "KWT", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 4589511.0, "gdp": 50984.301, "gini_2022": 40.41, "gini_1990": 39.511002, "gini_change": 0.89899826, "interpolated": "Extrapolated"}, {"country": "Mongolia", "c3": "MNG", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 3386015.0, "gdp": 15310.43, "gini_2022": 34.627998, "gini_1990": 36.075001, "gini_change": -1.4470024, "interpolated": "No"}, {"country": "Indonesia", "c3": "IDN", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 278830528.0, "gdp": 13334.29, "gini_2022": 37.764999, "gini_1990": 34.243, "gini_change": 3.5219994, "interpolated": "No"}, {"country": "Taiwan", "c3": "TWN", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 23420112.0, "gdp": 63771.762, "gini_2022": 31.573999, "gini_1990": 29.874001, "gini_change": 1.6999989, "interpolated": "Extrapolated"}, {"country": "Iraq", "c3": "IRQ", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 44070552.0, "gdp": 13393.67, "gini_2022": 40.783001, "gini_1990": 42.839001, "gini_change": -2.0559998, "interpolated": "Extrapolated"}, {"country": "Philippines", "c3": "PHL", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 113964336.0, "gdp": 9457.0996, "gini_2022": 40.506001, "gini_1990": 47.512001, "gini_change": -7.0060005, "interpolated": "Extrapolated"}, {"country": "Brunei", "c3": "BRN", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 455370.0, "gdp": 76357.828, "gini_2022": 28.673, "gini_1990": 31.497999, "gini_change": -2.8249989, "interpolated": "Extrapolated"}, {"country": "India", "c3": "IND", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 1425423232.0, "gdp": 8544.6904, "gini_2022": 48.983002, "gini_1990": 46.112, "gini_change": 2.8710022, "interpolated": "No"}, {"country": "Laos", "c3": "LAO", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 7559007.0, "gdp": 8183.0298, "gini_2022": 40.561001, "gini_1990": 36.993, "gini_change": 3.5680008, "interpolated": "Extrapolated"}, {"country": "Maldives", "c3": "MDV", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 524106.03125, "gdp": 21357.811, "gini_2022": 44.179001, "gini_1990": 52.925999, "gini_change": -8.7469978, "interpolated": "Extrapolated"}, {"country": "Iran", "c3": "IRN", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 89524240.0, "gdp": 15331.33, "gini_2022": 35.183998, "gini_1990": 41.575001, "gini_change": -6.3910027, "interpolated": "No"}, {"country": "Uzbekistan", "c3": "UZB", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 34938952.0, "gdp": 9607.5596, "gini_2022": 33.558998, "gini_1990": 29.339001, "gini_change": 4.2199974, "interpolated": "No"}, {"country": "Cambodia", "c3": "KHM", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 17201724.0, "gdp": 6456.7402, "gini_2022": 46.548, "gini_1990": 46.175999, "gini_change": 0.37200165, "interpolated": "Extrapolated"}, {"country": "Pakistan", "c3": "PAK", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 243700672.0, "gdp": 5526.2798, "gini_2022": 44.063, "gini_1990": 46.543999, "gini_change": -2.480999, "interpolated": "Extrapolated"}, {"country": "West Bank and Gaza", "c3": "PSE", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 5305270.0, "gdp": 5753.0801, "gini_2022": 44.896, "gini_1990": 40.799999, "gini_change": 4.0960007, "interpolated": "Extrapolated"}, {"country": "Vietnam", "c3": "VNM", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 99680656.0, "gdp": 12930.26, "gini_2022": 38.480999, "gini_1990": 38.075001, "gini_change": 0.40599823, "interpolated": "No"}, {"country": "Thailand", "c3": "THA", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 71735328.0, "gdp": 20741.52, "gini_2022": 37.335999, "gini_1990": 45.346001, "gini_change": -8.0100021, "interpolated": "Extrapolated"}, {"country": "Georgia", "c3": "GEO", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 3794784.0, "gdp": 20966.529, "gini_2022": 36.389999, "gini_1990": 43.113998, "gini_change": -6.723999, "interpolated": "No"}, {"country": "Nepal", "c3": "NPL", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 29715436.0, "gdp": 4763.3901, "gini_2022": 46.68, "gini_1990": 49.438999, "gini_change": -2.7589989, "interpolated": "Extrapolated"}, {"country": "Bangladesh", "c3": "BGD", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 169384896.0, "gdp": 7888.1602, "gini_2022": 49.775002, "gini_1990": 41.726002, "gini_change": 8.0489998, "interpolated": "No"}, {"country": "China", "c3": "CHN", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 1425179648.0, "gdp": 21011.619, "gini_2022": 43.563999, "gini_1990": 35.905998, "gini_change": 7.6580009, "interpolated": "No"}, {"country": "Sri Lanka", "c3": "LKA", "region_wb": "South Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 22834964.0, "gdp": 13249.41, "gini_2022": 50.444, "gini_1990": 51.008999, "gini_change": -0.56499863, "interpolated": "Extrapolated"}, {"country": "Singapore", "c3": "SGP", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 5649885.0, "gdp": 132468.94, "gini_2022": 40.236, "gini_1990": 43.487, "gini_change": -3.2509995, "interpolated": "Extrapolated"}, {"country": "Timor-Leste", "c3": "TLS", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 1369295.0, "gdp": 5344.1401, "gini_2022": 32.540001, "gini_1990": 38.341999, "gini_change": -5.8019981, "interpolated": "Extrapolated"}, {"country": "Azerbaijan", "c3": "AZE", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 10295304.0, "gdp": 21051.27, "gini_2022": 19.211, "gini_1990": 41.27, "gini_change": -22.059, "interpolated": "Extrapolated"}, {"country": "Kazakhstan", "c3": "KAZ", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Upper middle income", "population": 20034610.0, "gdp": 33506.262, "gini_2022": 36.881001, "gini_1990": 32.675999, "gini_change": 4.2050018, "interpolated": "Extrapolated"}, {"country": "United Arab Emirates", "c3": "ARE", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 10242086.0, "gdp": 68867.828, "gini_2022": 26.381001, "gini_1990": 32.587002, "gini_change": -6.2060013, "interpolated": "Extrapolated"}, {"country": "Lebanon", "c3": "LBN", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 5744489.0, "gdp": 11474.75, "gini_2022": 37.021999, "gini_1990": 44.23, "gini_change": -7.2080002, "interpolated": "Extrapolated"}, {"country": "Israel", "c3": "ISR", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 9103151.0, "gdp": 48271.422, "gini_2022": 38.134998, "gini_1990": 35.987999, "gini_change": 2.1469994, "interpolated": "Extrapolated"}, {"country": "Hong Kong", "c3": "HKG", "region_wb": "East Asia and the Pacific", "region_un": "Asia", "incomegroup": "High income", "population": 7465915.0, "gdp": 64036.789, "gini_2022": 40.888, "gini_1990": 32.960999, "gini_change": 7.927002, "interpolated": "Extrapolated"}, {"country": "Qatar", "c3": "QAT", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 2892455.0, "gdp": 114740.13, "gini_2022": 34.509998, "gini_1990": 36.994999, "gini_change": -2.4850006, "interpolated": "Extrapolated"}, {"country": "Saudi Arabia", "c3": "SAU", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 32175352.0, "gdp": 57351.879, "gini_2022": 34.509998, "gini_1990": 36.994999, "gini_change": -2.4850006, "interpolated": "Extrapolated"}, {"country": "Bahrain", "c3": "BHR", "region_wb": "Middle East and North Africa", "region_un": "Asia", "incomegroup": "High income", "population": 1533459.0, "gdp": 57465.172, "gini_2022": 34.509998, "gini_1990": 36.994999, "gini_change": -2.4850006, "interpolated": "Extrapolated"}, {"country": "Kyrgyzstan", "c3": "KGZ", "region_wb": "Europe and Central Asia", "region_un": "Asia", "incomegroup": "Lower middle income", "population": 6955788.0, "gdp": 6139.7798, "gini_2022": 29.695, "gini_1990": 46.077999, "gini_change": -16.382999, "interpolated": "No"}, {"country": "Papua New Guinea", "c3": "PNG", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 10203169.0, "gdp": 4125.4902, "gini_2022": 43.076, "gini_1990": 46.099998, "gini_change": -3.0239983, "interpolated": "Extrapolated"}, {"country": "Samoa", "c3": "WSM", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 215261.0, "gdp": 5843.77, "gini_2022": 40.57, "gini_1990": 42.053001, "gini_change": -1.4830017, "interpolated": "Extrapolated"}, {"country": "Solomon Islands", "c3": "SLB", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 781066.0, "gdp": 2517.9299, "gini_2022": 39.224998, "gini_1990": 46.250999, "gini_change": -7.026001, "interpolated": "Extrapolated"}, {"country": "Australia", "c3": "AUS", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "High income", "population": 26200984.0, "gdp": 58997.699, "gini_2022": 34.34, "gini_1990": 33.113998, "gini_change": 1.2260017, "interpolated": "Extrapolated"}, {"country": "Marshall Islands", "c3": "MHL", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Upper middle income", "population": 40077.0, "gdp": 6844.3301, "gini_2022": 37.855, "gini_1990": 37.855, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Nauru", "c3": "NRU", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "High income", "population": 11801.0, "gdp": 12467.35, "gini_2022": 35.119999, "gini_1990": 35.119999, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "New Zealand", "c3": "NZL", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "High income", "population": 5131734.0, "gdp": 49474.238, "gini_2022": 34.779999, "gini_1990": 31.033001, "gini_change": 3.7469978, "interpolated": "Extrapolated"}, {"country": "Vanuatu", "c3": "VUT", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 313046.0, "gdp": 3122.6399, "gini_2022": 35.493, "gini_1990": 39.423, "gini_change": -3.9300003, "interpolated": "Extrapolated"}, {"country": "Micronesia, Federated States of", "c3": "FSM", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 112114.0, "gdp": 3874.2, "gini_2022": 41.629002, "gini_1990": 62.798, "gini_change": -21.168999, "interpolated": "Extrapolated"}, {"country": "Palau", "c3": "PLW", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "High income", "population": 17759.0, "gdp": 15477.55, "gini_2022": 43.34, "gini_1990": 43.34, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Tonga", "c3": "TON", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Upper middle income", "population": 105042.0, "gdp": 6901.7402, "gini_2022": 31.202999, "gini_1990": 39.553001, "gini_change": -8.3500023, "interpolated": "Extrapolated"}, {"country": "Tuvalu", "c3": "TUV", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Upper middle income", "population": 9992.0, "gdp": 5498.1802, "gini_2022": 40.619999, "gini_1990": 40.619999, "gini_change": 0.0, "interpolated": "Extrapolated"}, {"country": "Kiribati", "c3": "KIR", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Lower middle income", "population": 130468.9921875, "gdp": 3117.76, "gini_2022": 31.885, "gini_1990": 39.202999, "gini_change": -7.3179989, "interpolated": "Extrapolated"}, {"country": "Fiji", "c3": "FJI", "region_wb": "East Asia and the Pacific", "region_un": "Oceania", "incomegroup": "Upper middle income", "population": 919422.0, "gdp": 12762.35, "gini_2022": 34.075001, "gini_1990": 46.584999, "gini_change": -12.509998, "interpolated": "Extrapolated"}, {"country": "Turkiye", "c3": "TUR", "region_wb": "Europe and Central Asia", "region_un": "", "incomegroup": "Upper middle income", "population": 87058480.0, "gdp": 33061.051, "gini_2022": 45.880001, "gini_1990": 46.654999, "gini_change": -0.77499771, "interpolated": "No"}];
+
+// ===== CONFIG =====
+const REGION_COLORS = {
+  'East Asia and the Pacific':          '#3B6D8F',
+  'Europe and Central Asia':            '#3A8660',
+  'Latin America and the Caribbean':    '#C44536',
+  'Middle East and North Africa':       '#C47F17',
+  'North America':                      '#5A8E8A',
+  'South Asia':                         '#8856A7',
+  'Sub-Saharan Africa':                 '#B8860B'
+};
+const REGION_SHORT = {
+  'East Asia and the Pacific':       'East Asia & Pacific',
+  'Europe and Central Asia':         'Europe & C. Asia',
+  'Latin America and the Caribbean': 'Latin America & Carib.',
+  'Middle East and North Africa':    'Middle East & N. Africa',
+  'North America':                   'North America',
+  'South Asia':                      'South Asia',
+  'Sub-Saharan Africa':              'Sub-Saharan Africa'
+};
+const QUADRANT_DEFS = [
+  { id:'low-decline',  label:'Lower & Declining',  sub:'More equal, improving',    color:'#2D7A50', bg:'var(--q-green)', xSide:'low',  ySide:'low'  },
+  { id:'low-increase', label:'Lower & Rising',     sub:'More equal, but worsening', color:'#C47F17', bg:'var(--q-yellow)', xSide:'low',  ySide:'high' },
+  { id:'high-decline', label:'Higher & Declining',  sub:'Less equal, but improving', color:'#336B99', bg:'var(--q-blue)',  xSide:'high', ySide:'low'  },
+  { id:'high-increase',label:'Higher & Rising',     sub:'Less equal, worsening',     color:'#C44536', bg:'var(--q-red)',   xSide:'high', ySide:'high' }
+];
+
+// ===== STATE =====
+let S = {
+  threshold: 50,
+  regionFilter: 'all',
+  incomeFilter: 'all',
+  search: '',
+  sizeBy: 'none',
+  xYear: '1990',
+  showLabels: true,
+  hiddenRegions: new Set()
+};
+
+// ===== HELPERS =====
+function xVal(d) { return S.xYear === '1990' ? d.gini_1990 : d.gini_2022; }
+function isMatch(d) {
+  if (!S.search) return false;
+  const q = S.search.toLowerCase();
+  return d.country.toLowerCase().includes(q) || d.c3.toLowerCase().includes(q);
+}
+function fmtPop(p) {
+  if (p >= 1e9) return (p/1e9).toFixed(1) + 'B';
+  if (p >= 1e6) return (p/1e6).toFixed(1) + 'M';
+  if (p >= 1e3) return (p/1e3).toFixed(0) + 'K';
+  return p.toString();
+}
+function fmtGdp(g) { return g >= 1000 ? '$' + (g/1000).toFixed(1) + 'K' : '$' + g.toFixed(0); }
+
+function filtered() {
+  return RAW_DATA.filter(d => {
+    if (d.gini_2022 == null || d.gini_1990 == null || d.gini_change == null) return false;
+    if (S.regionFilter !== 'all' && d.region_wb !== S.regionFilter) return false;
+    if (S.incomeFilter !== 'all' && d.incomegroup !== S.incomeFilter) return false;
+    if (S.hiddenRegions.has(d.region_wb)) return false;
+    return true;
+  });
+}
+
+// ===== INIT =====
+const margin = { top: 28, right: 24, bottom: 58, left: 62 };
+let W, H, svg, xSc, ySc, gQuad, gDots, gLabels;
+
+function init() {
+  populateDropdowns();
+  buildLegend();
+  measure();
+  buildChart();
+  bindEvents();
+  buildHeroStats();
+  update();
+  buildAnalysis();
+}
+
+function populateDropdowns() {
+  const regs = [...new Set(RAW_DATA.map(d => d.region_wb))].sort();
+  const incs = [...new Set(RAW_DATA.map(d => d.incomegroup))].filter(d => d !== 'Missing').sort();
+  const rs = document.getElementById('regionFilter');
+  regs.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = REGION_SHORT[r]; rs.appendChild(o); });
+  const is = document.getElementById('incomeFilter');
+  incs.forEach(i => { const o = document.createElement('option'); o.value = i; o.textContent = i; is.appendChild(o); });
+
+  // Mover filter dropdowns
+  const mrs = document.getElementById('moverRegionFilter');
+  regs.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = REGION_SHORT[r]; mrs.appendChild(o); });
+  const mis = document.getElementById('moverIncomeFilter');
+  incs.forEach(i => { const o = document.createElement('option'); o.value = i; o.textContent = i; mis.appendChild(o); });
+}
+
+function buildLegend() {
+  const c = document.getElementById('legendRow');
+  Object.entries(REGION_COLORS).forEach(([r, col]) => {
+    const el = document.createElement('div');
+    el.className = 'lr-item';
+    el.dataset.region = r;
+    el.innerHTML = `<span class="lr-dot" style="background:${col}"></span>${REGION_SHORT[r]}`;
+    el.addEventListener('click', () => {
+      if (S.hiddenRegions.has(r)) { S.hiddenRegions.delete(r); el.classList.remove('dimmed'); }
+      else { S.hiddenRegions.add(r); el.classList.add('dimmed'); }
+      update(); buildAnalysis();
+    });
+    c.appendChild(el);
+  });
+}
+
+function measure() {
+  const wrap = document.getElementById('chartWrap');
+  const isFS = wrap.classList.contains('fullscreen');
+  const ww = (isFS ? window.innerWidth - 40 : wrap.clientWidth - 48);
+  W = ww - margin.left - margin.right;
+  if (isFS) {
+    H = window.innerHeight - 80 - margin.top - margin.bottom;
+  } else {
+    H = Math.min(680, Math.max(450, ww * 0.58)) - margin.top - margin.bottom;
+  }
+}
+
+// ===== CHART =====
+let currentTransform = d3.zoomIdentity;
+let zoomBehavior;
+let baseXDomain, baseYDomain;
+let currentData = [];
+let currentGetR = d => 4.5;
+
+function buildChart() {
+  const wrap = document.getElementById('chartWrap');
+  wrap.querySelectorAll('svg').forEach(e => e.remove());
+
+  svg = d3.select(wrap).append('svg')
+    .attr('width', W + margin.left + margin.right)
+    .attr('height', H + margin.top + margin.bottom);
+
+  // Clip path for zoom
+  svg.append('defs').append('clipPath').attr('id', 'chart-clip')
+    .append('rect').attr('width', W).attr('height', H);
+
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  xSc = d3.scaleLinear().range([0, W]);
+  ySc = d3.scaleLinear().range([H, 0]);
+
+  gQuad = g.append('g').attr('clip-path', 'url(#chart-clip)');
+  g.append('g').attr('class', 'gx').attr('transform', `translate(0,${H})`);
+  g.append('g').attr('class', 'gy');
+
+  // Threshold lines inside clipped group
+  gQuad.append('line').attr('class', 'thr-x');
+  gQuad.append('line').attr('class', 'thr-y');
+
+  // Quadrant labels inside clipped group
+  ['ql-ll','ql-lh','ql-hl','ql-hh'].forEach(c => gQuad.append('text').attr('class', `q-label ${c}`));
+
+  // X-axis label
+  g.append('text').attr('class', 'ax-label xl')
+    .attr('x', W/2).attr('y', H + 46).attr('text-anchor','middle');
+
+  // Y-axis label
+  g.append('text').attr('class', 'ax-label yl')
+    .attr('transform','rotate(-90)').attr('x', -H/2).attr('y', -48).attr('text-anchor','middle');
+
+  // Content groups inside clip
+  const clipG = g.append('g').attr('clip-path', 'url(#chart-clip)');
+  gLabels = clipG.append('g');
+  gDots = clipG.append('g');
+
+  // Zoom behavior
+  zoomBehavior = d3.zoom()
+    .scaleExtent([1, 12])
+    .extent([[0, 0], [W, H]])
+    .on('zoom', onZoom);
+
+  // Invisible rect to capture zoom events over chart area
+  g.append('rect')
+    .attr('width', W).attr('height', H)
+    .attr('fill', 'transparent')
+    .style('cursor', 'grab');
+
+  svg.call(zoomBehavior);
+}
+
+function onZoom(event) {
+  currentTransform = event.transform;
+  render(false);
+  const isZoomed = currentTransform.k !== 1 || currentTransform.x !== 0 || currentTransform.y !== 0;
+  document.getElementById('resetZoomBtn').classList.toggle('hidden', !isZoomed);
+  document.getElementById('zoomHint').style.opacity = isZoomed ? '0' : '1';
+}
+
+function resetZoom() {
+  svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity);
+}
+
+function update() {
+  currentData = filtered();
+  const T = S.threshold;
+
+  // Compute base domains
+  const xe = d3.extent(currentData, d => xVal(d));
+  const ye = d3.extent(currentData, d => d.gini_change);
+  const xp = (xe[1]-xe[0])*0.08||5, yp = (ye[1]-ye[0])*0.08||3;
+  baseXDomain = [Math.min(xe[0]-xp, 15), Math.max(xe[1]+xp, 80)];
+  baseYDomain = [Math.min(ye[0]-yp, -25), Math.max(ye[1]+yp, 20)];
+  xSc.domain(baseXDomain);
+  ySc.domain(baseYDomain);
+
+  // Size scales
+  const popE = d3.extent(currentData, d => d.population);
+  const gdpE = d3.extent(currentData, d => d.gdp);
+  const rPop = d3.scaleSqrt().domain([0,popE[1]]).range([3,30]);
+  const rGdp = d3.scaleSqrt().domain([0,gdpE[1]]).range([3,20]);
+  currentGetR = function(d) {
+    if (S.sizeBy==='population') return rPop(d.population);
+    if (S.sizeBy==='gdp') return rGdp(d.gdp);
+    return 4.5;
+  };
+
+  // Reset zoom on data change
+  currentTransform = d3.zoomIdentity;
+  if (svg && zoomBehavior) svg.call(zoomBehavior.transform, d3.zoomIdentity);
+  document.getElementById('resetZoomBtn').classList.add('hidden');
+  document.getElementById('zoomHint').style.opacity = '1';
+
+  render(true);
+
+  // Count bar
+  const total = RAW_DATA.filter(d => d.gini_2022 != null && d.gini_1990 != null).length;
+  document.getElementById('countBar').innerHTML = `Showing <strong>${currentData.length}</strong> of ${total} countries`;
+
+  updateTags();
+  buildAnalysis();
+}
+
+function render(animate) {
+  const data = currentData;
+  const T = S.threshold;
+  const dur = animate ? 400 : 0;
+
+  // Zoomed scales
+  const zx = currentTransform.rescaleX(xSc);
+  const zy = currentTransform.rescaleY(ySc);
+  const g = svg.select('g');
+
+  // Axes
+  const xa = d3.axisBottom(zx).ticks(8).tickSize(-H).tickPadding(8);
+  const ya = d3.axisLeft(zy).ticks(8).tickSize(-W).tickPadding(8);
+
+  if (dur) {
+    g.select('.gx').transition().duration(dur).call(xa);
+    g.select('.gy').transition().duration(dur).call(ya);
+  } else {
+    g.select('.gx').call(xa);
+    g.select('.gy').call(ya);
+  }
+  g.select('.gx').selectAll('line').attr('stroke','#E8E6DF').attr('stroke-dasharray','2,3');
+  g.select('.gx').selectAll('.domain').attr('stroke','#C8C5BA');
+  g.select('.gx').selectAll('text').style('font-family','Source Sans 3').style('font-size','11px').style('fill','var(--text-light)');
+  g.select('.gy').selectAll('line').attr('stroke','#E8E6DF').attr('stroke-dasharray','2,3');
+  g.select('.gy').selectAll('.domain').attr('stroke','#C8C5BA');
+  g.select('.gy').selectAll('text').style('font-family','Source Sans 3').style('font-size','11px').style('fill','var(--text-light)');
+
+  // Axis labels
+  g.select('.xl').text(`Lower inequality  \u2190  Gini index (${S.xYear})  \u2192  Higher inequality`);
+  g.select('.yl').text('\u2190 Declined          Change in Gini, 1990\u20132022          Rose \u2192');
+
+  // Quadrant fills
+  const tx = zx(T), ty = zy(0);
+  gQuad.selectAll('rect').remove();
+  const qa = 0.45;
+  const clamp = v => Math.max(0, v);
+  gQuad.insert('rect',':first-child').attr('x',0).attr('y',clamp(ty)).attr('width',clamp(tx)).attr('height',clamp(H-ty)).attr('fill','#E6F2EC').attr('opacity',qa);
+  gQuad.insert('rect',':first-child').attr('x',0).attr('y',0).attr('width',clamp(tx)).attr('height',clamp(ty)).attr('fill','#FFF6E0').attr('opacity',qa);
+  gQuad.insert('rect',':first-child').attr('x',clamp(tx)).attr('y',clamp(ty)).attr('width',clamp(W-tx)).attr('height',clamp(H-ty)).attr('fill','#E8F0F8').attr('opacity',qa);
+  gQuad.insert('rect',':first-child').attr('x',clamp(tx)).attr('y',0).attr('width',clamp(W-tx)).attr('height',clamp(ty)).attr('fill','#FCEAE8').attr('opacity',qa);
+
+  // Threshold lines
+  gQuad.select('.thr-x').attr('x1',tx).attr('x2',tx).attr('y1',0).attr('y2',H)
+    .attr('stroke','#999').attr('stroke-dasharray','6,4').attr('stroke-width',1.2);
+  gQuad.select('.thr-y').attr('x1',0).attr('x2',W).attr('y1',ty).attr('y2',ty)
+    .attr('stroke','#999').attr('stroke-dasharray','6,4').attr('stroke-width',1.2);
+
+  // Quadrant labels — anchored to quadrant corners
+  const p = 8;
+  const qlX1 = Math.max(p, tx - 160), qlX2 = Math.min(W - p, tx + 160);
+  gQuad.select('.ql-ll').attr('x',p).attr('y',H-p).text('Lower & Declining \u2713').attr('fill','#2D7A50').attr('opacity',0.7);
+  gQuad.select('.ql-lh').attr('x',p).attr('y',p+12).text('Lower & Rising \u26A0').attr('fill','#C47F17').attr('opacity',0.7);
+  gQuad.select('.ql-hl').attr('x',W-p).attr('y',H-p).attr('text-anchor','end').text('Higher & Declining \u2198').attr('fill','#336B99').attr('opacity',0.7);
+  gQuad.select('.ql-hh').attr('x',W-p).attr('y',p+12).attr('text-anchor','end').text('Higher & Rising \u2717').attr('fill','#C44536').attr('opacity',0.7);
+
+  // === Dimming logic ===
+  const hasRegionFilter = S.regionFilter !== 'all';
+  const hasSearch = S.search.length > 0;
+
+  function dotOpacity(d) {
+    if (hasSearch) return isMatch(d) ? 0.92 : 0.06;
+    return 0.82;
+  }
+
+  // === DOTS ===
+  const dots = gDots.selectAll('circle').data(data, d => d.c3);
+  dots.exit().transition().duration(300).attr('r',0).remove();
+
+  const enter = dots.enter().append('circle')
+    .attr('cx', d => zx(xVal(d)))
+    .attr('cy', d => zy(d.gini_change))
+    .attr('r', 0)
+    .attr('fill', d => REGION_COLORS[d.region_wb]||'#999')
+    .attr('stroke','#fff').attr('stroke-width',0.8)
+    .attr('cursor','pointer')
+    .on('mouseover', showTip)
+    .on('mousemove', moveTip)
+    .on('mouseout', hideTip);
+
+  const merged = enter.merge(dots);
+  const applyDots = dur ? merged.transition().duration(dur) : merged;
+  applyDots
+    .attr('cx', d => zx(xVal(d)))
+    .attr('cy', d => zy(d.gini_change))
+    .attr('r', d => currentGetR(d))
+    .attr('fill', d => REGION_COLORS[d.region_wb]||'#999')
+    .attr('opacity', d => dotOpacity(d))
+    .attr('stroke', d => isMatch(d) ? '#BA3A1E' : 'rgba(255,255,255,0.7)')
+    .attr('stroke-width', d => isMatch(d) ? 2.5 : 0.8);
+
+  // === SMART LABELS with collision detection ===
+  gLabels.selectAll('text').remove();
+  if (!S.showLabels) return;
+
+  // Sort: search matches first, then by population (largest get label priority)
+  const sorted = [...data].sort((a, b) => {
+    const am = isMatch(a) ? 1 : 0, bm = isMatch(b) ? 1 : 0;
+    if (bm !== am) return bm - am;
+    return b.population - a.population;
+  });
+
+  const placed = []; // bounding boxes of placed labels
+  const PAD_X = 2, PAD_Y = 1;
+  const zoomK = currentTransform.k;
+  const fontSize = Math.min(11, 9.5 * Math.min(zoomK, 1.4));
+  const charW = fontSize < 10.5 ? 5.2 : 5.8;
+
+  sorted.forEach(d => {
+    const cx = zx(xVal(d)), cy = zy(d.gini_change);
+    // Skip off-screen
+    if (cx < -30 || cx > W + 30 || cy < -20 || cy > H + 20) return;
+
+    const searched = isMatch(d);
+    const text = searched ? d.country : d.c3;
+    const r = currentGetR(d);
+    const lx = cx + r + 4;
+    const ly = cy + fontSize * 0.35;
+    const lw = text.length * charW;
+    const lh = fontSize + 2;
+
+    const box = { x: lx - PAD_X, y: ly - lh + PAD_Y, w: lw + PAD_X*2, h: lh + PAD_Y*2 };
+
+    if (!searched) {
+      // Collision check
+      const collides = placed.some(p =>
+        box.x < p.x + p.w && box.x + box.w > p.x &&
+        box.y < p.y + p.h && box.y + box.h > p.y
+      );
+      if (collides) return;
+      if (lx + lw > W + 10 || lx < -5) return;
+      if (ly < -5 || ly > H + 10) return;
+    }
+
+    placed.push(box);
+
+    let opacity = 0.6;
+    if (hasSearch && !searched) opacity = 0.05;
+    if (hasSearch && searched) opacity = 1;
+
+    gLabels.append('text')
+      .attr('class', 'c-label')
+      .attr('x', lx).attr('y', ly)
+      .text(text)
+      .attr('opacity', opacity)
+      .attr('font-weight', searched ? '700' : '400')
+      .attr('fill', searched ? '#BA3A1E' : 'var(--text-light)')
+      .attr('font-size', fontSize + 'px');
+  });
+}
+
+
+// ===== TOOLTIP =====
+const QUAD_POLICY = {
+  'low-decline': { label: 'Lower & Declining', color: '#2D7A50', note: 'Success story — inequality is low and falling' },
+  'low-rise': { label: 'Lower & Rising', color: '#C47F17', note: 'Warning — gains may be reversing' },
+  'high-decline': { label: 'Higher & Declining', color: '#336B99', note: 'Progress — but still far from equitable' },
+  'high-rise': { label: 'Higher & Rising', color: '#C44536', note: 'Urgent — inequality is compounding' }
+};
+
+function getQuadrant(d) {
+  const T = S.threshold;
+  const high = xVal(d) >= T;
+  const rising = d.gini_change > 0;
+  if (!high && !rising) return QUAD_POLICY['low-decline'];
+  if (!high && rising) return QUAD_POLICY['low-rise'];
+  if (high && !rising) return QUAD_POLICY['high-decline'];
+  return QUAD_POLICY['high-rise'];
+}
+
+const tipEl = document.getElementById('tip');
+function showTip(ev, d) {
+  const dir = d.gini_change > 0 ? '↑' : d.gini_change < 0 ? '↓' : '→';
+  const cc = d.gini_change > 0 ? '#F2A899' : d.gini_change < 0 ? '#7AD4A8' : '#AAA';
+  const q = getQuadrant(d);
+  tipEl.innerHTML = `
+    <div class="tip-name">${d.country}</div>
+    <div style="font-size:0.68rem;padding:3px 7px;margin-bottom:6px;border-radius:3px;background:${q.color};color:#fff;display:inline-block">${q.note}</div>
+    <div class="tip-r"><span class="tip-l">Gini 2022</span><span class="tip-v">${d.gini_2022.toFixed(1)}</span></div>
+    <div class="tip-r"><span class="tip-l">Gini 1990</span><span class="tip-v">${d.gini_1990 != null ? d.gini_1990.toFixed(1) : '—'}</span></div>
+    <div class="tip-r"><span class="tip-l">Change</span><span class="tip-v" style="color:${cc}">${dir} ${Math.abs(d.gini_change).toFixed(1)} pts</span></div>
+    <div class="tip-r"><span class="tip-l">Population</span><span class="tip-v">${fmtPop(d.population)}</span></div>
+    <div class="tip-r"><span class="tip-l">GDP/capita (PPP)</span><span class="tip-v">${fmtGdp(d.gdp)}</span></div>
+    <div class="tip-r"><span class="tip-l">Region</span><span class="tip-v">${REGION_SHORT[d.region_wb]}</span></div>
+    <div class="tip-r"><span class="tip-l">Income group</span><span class="tip-v">${d.incomegroup}</span></div>
+    <span class="tip-badge ${d.interpolated==='No'?'obs':'ext'}">${d.interpolated==='No'?'● Observed data':'○ Extrapolated estimate'}</span>`;
+  tipEl.style.opacity = '1';
+}
+function moveTip(ev) {
+  let x = ev.clientX+14, y = ev.clientY-10;
+  if (x + 300 > window.innerWidth) x = ev.clientX - 310;
+  if (y + 240 > window.innerHeight) y = ev.clientY - 240;
+  tipEl.style.left = x+'px'; tipEl.style.top = y+'px';
+}
+function hideTip() { tipEl.style.opacity = '0'; }
+
+// ===== FILTER TAGS =====
+function updateTags() {
+  const c = document.getElementById('filterTags');
+  c.innerHTML = '';
+  const tags = [];
+  if (S.regionFilter!=='all') tags.push({l:REGION_SHORT[S.regionFilter], cl:()=>{S.regionFilter='all';document.getElementById('regionFilter').value='all';}});
+  if (S.incomeFilter!=='all') tags.push({l:S.incomeFilter, cl:()=>{S.incomeFilter='all';document.getElementById('incomeFilter').value='all';}});
+  S.hiddenRegions.forEach(r => tags.push({l:`Hidden: ${REGION_SHORT[r]}`, cl:()=>{S.hiddenRegions.delete(r);document.querySelector(`.lr-item[data-region="${r}"]`).classList.remove('dimmed');}}));
+  if (!tags.length) return;
+  const lbl = document.createElement('span'); lbl.className='ftl'; lbl.textContent='Filters:'; c.appendChild(lbl);
+  tags.forEach(t => {
+    const el = document.createElement('span'); el.className='ftag';
+    el.innerHTML = `${t.l} <span class="fx">×</span>`;
+    el.querySelector('.fx').addEventListener('click', ()=>{t.cl(); update();});
+    c.appendChild(el);
+  });
+  if (tags.length>1) {
+    const b = document.createElement('button'); b.className='clear-btn'; b.textContent='Clear all';
+    b.addEventListener('click', ()=>{
+      S.regionFilter='all'; S.incomeFilter='all'; S.hiddenRegions.clear();
+      document.getElementById('regionFilter').value='all';
+      document.getElementById('incomeFilter').value='all';
+      document.querySelectorAll('.lr-item').forEach(e=>e.classList.remove('dimmed'));
+      update();
+    });
+    c.appendChild(b);
+  }
+}
+
+// ===== HERO STATS =====
+function buildHeroStats() {
+  const data = RAW_DATA.filter(d => d.gini_2022 != null && d.gini_1990 != null);
+  const T = S.threshold;
+  const highRising = data.filter(d => xVal(d) >= T && d.gini_change > 0);
+  const hrPop = highRising.reduce((s,d) => s + d.population, 0);
+  const declined = data.filter(d => d.gini_change < 0);
+  const totalPop = data.reduce((s,d) => s + d.population, 0);
+  const avgGiniChange = data.reduce((s,d) => s + d.gini_change, 0) / data.length;
+
+  document.getElementById('heroStats').innerHTML = `
+    <div class="hero-card accent">
+      <div class="hero-num">${fmtPop(hrPop)}</div>
+      <div class="hero-label">people in "High & Rising" countries</div>
+      <div class="hero-sub">${highRising.length} countries where inequality is already high and getting worse</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-num" style="color:#2D7A50">${(declined.length/data.length*100).toFixed(0)}%</div>
+      <div class="hero-label">of countries saw inequality fall</div>
+      <div class="hero-sub">${declined.length} of ${data.length} countries improved since 1990</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-num" style="color:${avgGiniChange < 0 ? '#2D7A50' : '#C44536'}">${avgGiniChange > 0 ? '+' : ''}${avgGiniChange.toFixed(1)}</div>
+      <div class="hero-label">avg. Gini change globally</div>
+      <div class="hero-sub">A ${avgGiniChange < 0 ? 'net improvement' : 'net worsening'} — but enormous variation across countries</div>
+    </div>
+  `;
+}
+
+// ===== BELOW-CHART ANALYSIS =====
+function buildAnalysis() {
+  const data = filtered();
+  const T = S.threshold;
+  const allRegions = Object.keys(REGION_COLORS);
+
+  // === Quadrant cards ===
+  const quads = QUADRANT_DEFS.map(q => {
+    const countries = data.filter(d => {
+      const xm = q.xSide==='low' ? xVal(d)<T : xVal(d)>=T;
+      const ym = q.ySide==='low' ? d.gini_change<0 : d.gini_change>=0;
+      return xm && ym;
+    });
+    const pop = countries.reduce((s,d)=>s+d.population, 0);
+    const rb = allRegions.map(r => {
+      const rc = countries.filter(d=>d.region_wb===r);
+      return {region:r, count:rc.length, pct: countries.length ? (rc.length/countries.length*100) : 0};
+    }).filter(r=>r.count>0).sort((a,b)=>b.count-a.count);
+    return {...q, countries, count:countries.length, pop, rb};
+  });
+  const totalPop = quads.reduce((s,q)=>s+q.pop, 0);
+
+  document.getElementById('quadCards').innerHTML = quads.map(q => `
+    <div class="q-card" style="background:${q.bg};border-color:${q.color};">
+      <h3 style="color:${q.color}">${q.label}</h3>
+      <div class="q-sub">${q.sub}</div>
+      <div class="q-stat-row">
+        <span class="q-big" style="color:${q.color}">${q.count}</span>
+        <span class="q-stat-label">countries</span>
+      </div>
+      <div class="q-stat-row">
+        <span class="q-big" style="color:${q.color}">${totalPop>0?((q.pop/totalPop)*100).toFixed(0):'0'}%</span>
+        <span class="q-stat-label">of population shown</span>
+      </div>
+      <div class="q-regions">
+        ${q.rb.slice(0,5).map(r => `
+          <div class="q-reg-row">
+            <span class="q-reg-dot" style="background:${REGION_COLORS[r.region]}"></span>
+            ${REGION_SHORT[r.region]}
+            <span class="q-reg-n">${r.count} (${r.pct.toFixed(0)}%)</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // === Key takeaways ===
+  const declined = data.filter(d => d.gini_change < 0);
+  const rose = data.filter(d => d.gini_change > 0);
+  const highAndRising = quads[3];
+  const popDeclined = declined.reduce((s,d)=>s+d.population,0);
+  const popTotal = data.reduce((s,d)=>s+d.population,0);
+  const avgChange = data.reduce((s,d)=>s+d.gini_change,0) / data.length;
+  const ssaData = data.filter(d=>d.region_wb==='Sub-Saharan Africa');
+  const ssaAvgGini = ssaData.length ? (ssaData.reduce((s,d)=>s+d.gini_2022,0)/ssaData.length) : 0;
+  const ecaData = data.filter(d=>d.region_wb==='Europe and Central Asia');
+  const ecaRose = ecaData.filter(d=>d.gini_change>0);
+
+  const findings = [
+    { text: `<strong>${declined.length} of ${data.length} countries</strong> (${(declined.length/data.length*100).toFixed(0)}%) saw income inequality <strong>decline</strong> between 1990 and 2022 \u2014 representing <strong>${fmtPop(popDeclined)}</strong> people, or ${(popDeclined/popTotal*100).toFixed(0)}% of the population shown.` },
+    { text: `The average change in Gini across all countries was <strong>${avgChange.toFixed(1)} points</strong> \u2014 a ${avgChange<0?'net improvement':'net worsening'} globally. But averages mask huge variation: changes ranged from ${data.reduce((m,d)=>Math.min(m,d.gini_change),0).toFixed(1)} to +${data.reduce((m,d)=>Math.max(m,d.gini_change),0).toFixed(1)} points.` },
+    { text: `<strong>Sub-Saharan Africa</strong> has the highest average Gini (${ssaAvgGini.toFixed(1)} in 2022) and dominates the \u201CHigher\u201D quadrants \u2014 ${ssaData.filter(d=>xVal(d)>=T).length} of its ${ssaData.length} countries have a Gini above ${T}.` },
+    { text: `<strong>Europe & Central Asia</strong> tells a more complex story: while it has the lowest average inequality, <strong>${ecaRose.length} of ${ecaData.length}</strong> countries saw Gini <em>rise</em> \u2014 many former Soviet states transitioning to market economies.` },
+    { text: `The <strong>\u201CHigher & Rising\u201D</strong> quadrant \u2014 the most concerning \u2014 contains <strong>${highAndRising.count} countries</strong> with ${(highAndRising.pop/totalPop*100).toFixed(0)}% of the shown population. These are places where already-high inequality is getting worse.` },
+  ];
+
+  document.getElementById('tkList').innerHTML = findings.map((f,i) => `
+    <div class="tk-item">
+      <span class="tk-num">${i+1}</span>
+      <span class="tk-text">${f.text}</span>
+    </div>
+  `).join('');
+
+  // === Country spotlight: top 12 by population ===
+  const spotData = [...data].sort((a,b) => b.population - a.population).slice(0, 12);
+  const maxGini = 75; // scale bar against this max
+
+  document.getElementById('spotlightGrid').innerHTML = spotData.map(d => {
+    const w90 = (d.gini_1990 / maxGini * 100).toFixed(1);
+    const w22 = (d.gini_2022 / maxGini * 100).toFixed(1);
+    const chg = d.gini_change;
+    const dir = chg > 0 ? '\u2191' : chg < 0 ? '\u2193' : '\u2192';
+    const cls = chg < 0 ? 'down' : chg > 0 ? 'up' : '';
+    const barColor = REGION_COLORS[d.region_wb] || '#999';
+    return `
+      <div class="spot-row">
+        <div>
+          <div class="spot-name">${d.country}</div>
+          <div class="spot-pop">${fmtPop(d.population)}</div>
+        </div>
+        <div class="spot-bar-wrap">
+          <div class="spot-bar-1990" style="width:${w90}%"></div>
+          <div class="spot-bar-2022" style="width:${w22}%;background:${barColor};opacity:0.5"></div>
+          <div class="spot-bar-label">${d.gini_2022.toFixed(1)}</div>
+        </div>
+        <div class="spot-change ${cls}">${dir} ${Math.abs(chg).toFixed(1)}</div>
+      </div>`;
+  }).join('');
+
+  // === Biggest movers ===
+  buildMovers();
+
+  // === Regional snapshot (sorted by severity - highest avg Gini first) ===
+  const regStats = allRegions.map(r => {
+    const rd = data.filter(d => d.region_wb === r);
+    if (!rd.length) return null;
+    const avg22 = rd.reduce((s,d)=>s+d.gini_2022,0)/rd.length;
+    const avgChg = rd.reduce((s,d)=>s+d.gini_change,0)/rd.length;
+    const pctDeclined = (rd.filter(d=>d.gini_change<0).length / rd.length * 100);
+    const pop = rd.reduce((s,d)=>s+d.population,0);
+    return { region: r, n: rd.length, avg22, avgChg, pctDeclined, pop };
+  }).filter(Boolean).sort((a,b) => b.avg22 - a.avg22);
+
+  document.getElementById('regCards').innerHTML = regStats.map((r, i) => `
+    <div class="reg-card" style="border-top-color:${REGION_COLORS[r.region]}">
+      <div class="rc-name" style="color:${REGION_COLORS[r.region]}">${REGION_SHORT[r.region]}</div>
+      <div class="rc-stat"><span>${r.n}</span> countries \u00B7 <span>${fmtPop(r.pop)}</span> people</div>
+      <div class="rc-stat">Avg. Gini 2022: <span>${r.avg22.toFixed(1)}</span></div>
+      <div class="rc-stat">Avg. change: <span style="color:${r.avgChg<0?'#2D7A50':'#C44536'}">${r.avgChg>0?'+':''}${r.avgChg.toFixed(1)}</span> pts</div>
+      <div class="rc-stat"><span>${r.pctDeclined.toFixed(0)}%</span> of countries declined</div>
+    </div>
+  `).join('');
+
+  // === Counterfactual ===
+  const hrCountries = quads[3].countries; // Higher & Rising
+  const hrTotalPop = hrCountries.reduce((s,d)=>s+d.population, 0);
+  const avgHRGini = hrCountries.length ? hrCountries.reduce((s,d)=>s+d.gini_2022,0)/hrCountries.length : 0;
+  // What if they each reduced by 5 Gini points (approx Brazil's achievement)?
+  const targetReduction = 5;
+
+  document.getElementById('counterfactual').innerHTML = `
+    <h3>What would it take?</h3>
+    <p>If every country in the <strong>"Higher & Rising"</strong> quadrant reduced its Gini by just <strong>${targetReduction} points</strong> \u2014 roughly what Brazil achieved between 1990 and 2022 \u2014</p>
+    <span class="cf-big">${fmtPop(hrTotalPop)} people</span>
+    <p>across <strong>${hrCountries.length} countries</strong> would see meaningful improvement. Their average Gini would fall from <strong>${avgHRGini.toFixed(1)}</strong> to <strong>${(avgHRGini - targetReduction).toFixed(1)}</strong> \u2014 still high, but moving in the right direction.</p>
+  `;
+}
+
+// ===== MOVERS (with own filters) =====
+let moverState = { region: 'all', income: 'all' };
+
+function buildMovers() {
+  const data = filtered();
+  let moverData = data;
+  if (moverState.region !== 'all') moverData = moverData.filter(d => d.region_wb === moverState.region);
+  if (moverState.income !== 'all') moverData = moverData.filter(d => d.incomegroup === moverState.income);
+
+  if (moverData.length === 0) {
+    document.getElementById('moversGrid').innerHTML = '<p style="color:var(--text-faint);font-size:0.85rem;">No countries match the selected filters.</p>';
+    return;
+  }
+
+  const sorted = [...moverData].sort((a,b) => a.gini_change - b.gini_change);
+  const n = Math.min(8, Math.ceil(sorted.length / 2));
+  const topDecliners = sorted.slice(0, n);
+  const topRisers = sorted.slice(-n).reverse();
+
+  function renderTable(list, direction) {
+    const isDown = direction === 'down';
+    return `
+      <div class="mover-block">
+        <h4 style="color:${isDown ? '#2D7A50' : '#C44536'}">${isDown ? '\u2193 Biggest declines (more equal)' : '\u2191 Biggest rises (less equal)'}</h4>
+        <table class="mover-table">
+          <tr><th>Country</th><th>1990</th><th>2022</th><th>Change</th></tr>
+          ${list.map(d => `<tr>
+            <td>${d.country}</td>
+            <td>${d.gini_1990.toFixed(1)}</td>
+            <td>${d.gini_2022.toFixed(1)}</td>
+            <td class="${isDown?'chg-down':'chg-up'}">${isDown?'':'+'}${d.gini_change.toFixed(1)}</td>
+          </tr>`).join('')}
+        </table>
+      </div>`;
+  }
+
+  document.getElementById('moversGrid').innerHTML = renderTable(topDecliners, 'down') + renderTable(topRisers, 'up');
+}
+
+
+// ===== FULLSCREEN =====
+function toggleFullscreen() {
+  const wrap = document.getElementById('chartWrap');
+  const overlay = document.getElementById('fsOverlay');
+  const btn = document.getElementById('expandBtn');
+  const isFS = wrap.classList.contains('fullscreen');
+
+  if (isFS) {
+    wrap.classList.remove('fullscreen');
+    overlay.classList.remove('active');
+    btn.innerHTML = '⛶ Expand';
+    document.body.style.overflow = '';
+  } else {
+    wrap.classList.add('fullscreen');
+    overlay.classList.add('active');
+    btn.innerHTML = '✕ Close';
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Rebuild chart at new size
+  measure();
+  buildChart();
+  update();
+}
+
+// ===== EVENTS =====
+function bindEvents() {
+  document.getElementById('regionFilter').addEventListener('change', e => { S.regionFilter=e.target.value; update(); });
+  document.getElementById('incomeFilter').addEventListener('change', e => { S.incomeFilter=e.target.value; update(); });
+  document.getElementById('xYearSelect').addEventListener('change', e => { S.xYear=e.target.value; update(); });
+  document.getElementById('thresholdInput').addEventListener('change', e => { S.threshold=parseFloat(e.target.value)||50; update(); });
+  document.getElementById('sizeBySelect').addEventListener('change', e => { S.sizeBy=e.target.value; update(); });
+  document.getElementById('labelToggle').addEventListener('change', e => { S.showLabels=e.target.checked; render(false); });
+
+  // Search: re-render without resetting zoom so user can search within a zoomed view
+  document.getElementById('searchInput').addEventListener('input', e => {
+    S.search = e.target.value.trim();
+    render(false);
+  });
+
+  // Zoom buttons
+  document.getElementById('resetZoomBtn').addEventListener('click', resetZoom);
+  document.getElementById('zoomInBtn').addEventListener('click', () => {
+    svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.5);
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', () => {
+    svg.transition().duration(300).call(zoomBehavior.scaleBy, 0.67);
+  });
+
+  // Fullscreen
+  document.getElementById('expandBtn').addEventListener('click', toggleFullscreen);
+  document.getElementById('fsOverlay').addEventListener('click', toggleFullscreen);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('chartWrap').classList.contains('fullscreen')) {
+      toggleFullscreen();
+    }
+  });
+
+  // Mover filters (independent of main chart filters)
+  document.getElementById('moverRegionFilter').addEventListener('change', e => {
+    moverState.region = e.target.value;
+    buildMovers();
+  });
+  document.getElementById('moverIncomeFilter').addEventListener('change', e => {
+    moverState.income = e.target.value;
+    buildMovers();
+  });
+
+  let rt;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(()=>{ measure(); buildChart(); update(); }, 200);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
