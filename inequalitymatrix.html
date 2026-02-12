@@ -1546,6 +1546,13 @@ function fmtGdp(g) { return g >= 1000 ? '$' + (g/1000).toFixed(1) + 'K' : '$' + 
 function filtered() {
   return RAW_DATA.filter(d => {
     if (giniBase(d) == null || giniFinal(d) == null) return false;
+
+    // If countries are selected, show ONLY those countries (overrides other filters)
+    if (S.selectedCountries.size > 0) {
+      return S.selectedCountries.has(d.c3);
+    }
+
+    // Otherwise apply region/income filters
     if (S.regionFilter !== 'all' && d.region_wb !== S.regionFilter) return false;
     if (S.incomeFilter !== 'all' && d.incomegroup !== S.incomeFilter) return false;
     if (S.hiddenRegions.has(d.region_wb)) return false;
