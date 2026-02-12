@@ -1363,7 +1363,7 @@ function syncUIFromState() {
   document.getElementById('thresholdInput').value = S.threshold;
   document.getElementById('regionFilter').value = S.regionFilter;
   document.getElementById('incomeFilter').value = S.incomeFilter;
-  document.getElementById('searchInput').value = S.search;
+  // searchTerm is ephemeral, not synced from URL state
   document.getElementById('sizeBySelect').value = S.sizeBy;
   document.getElementById('baseYearSelect').value = S.baseYear;
   document.getElementById('finalYearSelect').value = S.finalYear;
@@ -1377,6 +1377,8 @@ function syncUIFromState() {
     const el = document.querySelector(`.lr-item[data-region="${r}"]`);
     if (el) el.classList.add('dimmed');
   });
+  // Initialize chips after state is loaded
+  renderChips();
 }
 
 // ===== HELPERS =====
@@ -2668,9 +2670,6 @@ function bindEvents() {
       closeDropdown();
     }
   });
-
-  // Initialize chips on page load
-  renderChips();
 
   // Zoom buttons
   document.getElementById('resetZoomBtn').addEventListener('click', resetZoom);
