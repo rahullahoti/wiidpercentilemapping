@@ -148,381 +148,6 @@ body {
 .ftag .fx:hover { color: var(--accent); }
 .clear-btn { font-size: 0.76rem; color: var(--accent); cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
 
-/* === MULTI-SELECT AUTOCOMPLETE === */
-.ctrl.search-ctrl {
-  flex: 1;
-  min-width: 280px;
-  max-width: 400px;
-  position: relative;
-}
-
-.search-input {
-  font-family: 'Source Sans 3', sans-serif;
-  font-size: 0.84rem;
-  padding: 5px 10px;
-  width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg);
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.search-input:focus {
-  border-color: var(--accent);
-}
-
-.search-input::placeholder {
-  color: var(--text-faint);
-  font-weight: 300;
-}
-
-/* Autocomplete Dropdown */
-.autocomplete-dropdown {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  max-height: 320px;
-  overflow-y: auto;
-  background: var(--surface);
-  border: 1.5px solid var(--accent);
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 1000;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--surface);
-}
-
-.autocomplete-dropdown.hidden {
-  display: none;
-}
-
-.autocomplete-dropdown::-webkit-scrollbar {
-  width: 8px;
-}
-
-.autocomplete-dropdown::-webkit-scrollbar-track {
-  background: var(--surface);
-}
-
-.autocomplete-dropdown::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-
-.autocomplete-item {
-  padding: 8px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--border-light);
-  transition: background 0.1s;
-}
-
-.autocomplete-item:last-child {
-  border-bottom: none;
-}
-
-.autocomplete-item:hover {
-  background: var(--surface-alt);
-}
-
-.autocomplete-item:active {
-  background: var(--accent-light);
-}
-
-.autocomplete-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.1);
-}
-
-.autocomplete-name {
-  flex: 1;
-  font-size: 0.84rem;
-  font-weight: 400;
-  color: var(--text);
-}
-
-.autocomplete-c3 {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-light);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: 0.02em;
-}
-
-.autocomplete-region {
-  font-size: 0.68rem;
-  color: var(--text-faint);
-  font-style: italic;
-  margin-left: auto;
-  padding-left: 8px;
-}
-
-.autocomplete-empty {
-  padding: 16px 12px;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--text-light);
-  font-style: italic;
-}
-
-.autocomplete-item.keyboard-focus {
-  background: var(--accent-light);
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-/* Chip Container */
-.chip-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-  min-height: 28px;
-  align-items: center;
-  max-height: 120px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.chip-container::-webkit-scrollbar {
-  height: 6px;
-}
-
-.chip-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chip-container::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-.chip-label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-faint);
-  font-weight: 600;
-  margin-right: 4px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 6px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  font-size: 0.76rem;
-  color: var(--text);
-  transition: all 0.15s;
-  cursor: default;
-  user-select: none;
-  animation: chipEnter 0.15s ease-out;
-}
-
-.chip:hover {
-  background: var(--surface-alt);
-  border-color: var(--accent);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.chip.removing {
-  animation: chipExit 0.12s ease-in forwards;
-}
-
-.chip-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  border: 1px solid rgba(0,0,0,0.15);
-}
-
-.chip-text {
-  font-weight: 500;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chip-x {
-  cursor: pointer;
-  color: var(--text-faint);
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 2px;
-  margin-left: 2px;
-  transition: color 0.15s;
-  font-weight: 700;
-}
-
-.chip-x:hover {
-  color: var(--accent);
-  transform: scale(1.2);
-}
-
-.chip-x:active {
-  transform: scale(0.95);
-}
-
-.chip-count {
-  font-size: 0.76rem;
-  color: var(--text-mid);
-  font-weight: 600;
-  margin-left: 4px;
-}
-
-.chip-count.max-warning {
-  color: var(--accent);
-}
-
-.clear-chips-btn {
-  font-size: 0.72rem;
-  color: var(--accent);
-  cursor: pointer;
-  text-decoration: underline;
-  background: none;
-  border: none;
-  font-family: inherit;
-  padding: 0 4px;
-  transition: opacity 0.15s;
-}
-
-.clear-chips-btn:hover {
-  opacity: 0.7;
-}
-
-.clear-chips-btn:active {
-  opacity: 0.5;
-}
-
-.chip-container.at-max {
-  border: 1px dashed var(--accent);
-  border-radius: 4px;
-  padding: 4px;
-}
-
-.search-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.chip-x:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-radius: 2px;
-}
-
-/* Animations */
-@keyframes chipEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes chipExit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.7);
-  }
-}
-
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.autocomplete-dropdown:not(.hidden) {
-  animation: dropdownSlide 0.15s ease-out;
-}
-
-/* Screen reader only */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* Mobile responsive */
-@media (max-width: 640px) {
-  .search-ctrl {
-    min-width: 100%;
-    max-width: 100%;
-  }
-
-  .chip-container {
-    max-height: 96px;
-  }
-
-  .chip-text {
-    max-width: 140px;
-  }
-
-  .autocomplete-dropdown {
-    max-height: 240px;
-  }
-
-  .chip-x {
-    padding: 4px;
-    font-size: 1.1rem;
-  }
-
-  .autocomplete-item {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .autocomplete-region {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chip,
-  .autocomplete-dropdown {
-    animation: none !important;
-  }
-
-  * {
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /* === CHART AREA === */
 .chart-wrap {
   background: var(--surface);
@@ -1105,21 +730,9 @@ body {
         <option value="gdp">GDP per capita</option>
       </select>
     </div>
-    <div class="ctrl search-ctrl">
-      <label>Select Countries</label>
-      <input
-        type="text"
-        id="countrySearch"
-        class="search-input"
-        placeholder="Type to search (e.g., Brazil, IND, South Asia)…"
-        autocomplete="off"
-        aria-label="Search countries to select"
-        aria-autocomplete="list"
-        aria-controls="autocomplete-list"
-        aria-expanded="false"
-        role="combobox"
-      />
-      <div id="autocomplete-list" class="autocomplete-dropdown hidden" role="listbox" aria-label="Country search results"></div>
+    <div class="ctrl">
+      <label>Search Country</label>
+      <input type="text" id="searchInput" placeholder="e.g. Brazil, IND…">
     </div>
     <div class="ctrl">
       <div class="toggle-wrap">
@@ -1129,17 +742,8 @@ body {
     </div>
   </div>
 
-  <!-- SELECTED COUNTRIES CHIPS -->
-  <div class="chip-container" id="chipContainer" role="list" aria-label="Selected countries" aria-live="polite" aria-atomic="false">
-    <span class="chip-label">Selected:</span>
-    <span class="chip-count" id="chipCount" aria-live="polite" aria-atomic="true">0 / 20</span>
-  </div>
-
   <!-- FILTER TAGS -->
   <div class="filter-tags" id="filterTags"></div>
-
-  <!-- Screen reader announcer -->
-  <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <!-- LEGEND (horizontal) -->
   <div class="legend-row" id="legendRow">
@@ -1270,8 +874,7 @@ let S = {
   threshold: 40,
   regionFilter: 'all',
   incomeFilter: 'all',
-  selectedCountries: new Set(),  // Changed from search: ''
-  searchTerm: '',  // Temporary autocomplete query
+  search: '',
   sizeBy: 'population',
   baseYear: '1990',
   finalYear: '2022',
@@ -1281,7 +884,7 @@ let S = {
 };
 
 // ===== URL STATE =====
-const DEFAULTS = { threshold:40, regionFilter:'all', incomeFilter:'all', selectedCountries:new Set(), sizeBy:'population', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
+const DEFAULTS = { threshold:40, regionFilter:'all', incomeFilter:'all', search:'', sizeBy:'population', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
 const VALID_SIZES = new Set(['none','population','gdp']);
 const VALID_YEARS = new Set(['1990','2000','2010','2019','2022']);
 const YEAR_ORDER = ['1990','2000','2010','2019','2022'];
@@ -1292,7 +895,7 @@ function stateToURL() {
   if (S.threshold !== DEFAULTS.threshold) p.set('t', S.threshold);
   if (S.regionFilter !== DEFAULTS.regionFilter) p.set('r', S.regionFilter);
   if (S.incomeFilter !== DEFAULTS.incomeFilter) p.set('i', S.incomeFilter);
-  if (S.selectedCountries.size > 0) p.set('sc', [...S.selectedCountries].sort().join(','));
+  if (S.search !== DEFAULTS.search) p.set('q', S.search);
   if (S.sizeBy !== DEFAULTS.sizeBy) p.set('s', S.sizeBy);
   if (S.baseYear !== DEFAULTS.baseYear) p.set('by', S.baseYear);
   if (S.finalYear !== DEFAULTS.finalYear) p.set('fy', S.finalYear);
@@ -1316,28 +919,7 @@ function stateFromURL() {
   if (p.has('t')) { const v = parseFloat(p.get('t')); if (v >= 20 && v <= 80) S.threshold = v; }
   if (p.has('r') && (p.get('r') === 'all' || validRegions.has(p.get('r')))) S.regionFilter = p.get('r');
   if (p.has('i') && (p.get('i') === 'all' || validIncomes.has(p.get('i')))) S.incomeFilter = p.get('i');
-
-  // New format: multi-select countries
-  if (p.has('sc')) {
-    const codes = p.get('sc').split(',').filter(Boolean);
-    const validC3s = new Set(RAW_DATA.map(d => d.c3));
-    const validCodes = codes.filter(c3 => validC3s.has(c3));
-    S.selectedCountries = new Set(validCodes.slice(0, 20));
-  }
-  // Legacy format: backwards compatibility for old search
-  else if (p.has('q')) {
-    const query = p.get('q').trim();
-    if (query) {
-      const match = RAW_DATA.find(d =>
-        d.country.toLowerCase() === query.toLowerCase() ||
-        d.c3.toLowerCase() === query.toLowerCase()
-      );
-      if (match) {
-        S.selectedCountries = new Set([match.c3]);
-      }
-    }
-  }
-
+  if (p.has('q')) S.search = p.get('q').slice(0, 100);
   if (p.has('s') && VALID_SIZES.has(p.get('s'))) S.sizeBy = p.get('s');
   if (p.has('by') && VALID_YEARS.has(p.get('by'))) S.baseYear = p.get('by');
   if (p.has('fy') && VALID_YEARS.has(p.get('fy'))) S.finalYear = p.get('fy');
@@ -1398,143 +980,11 @@ function updateBaseYearOptions() {
   [...sel.options].forEach(opt => { opt.disabled = YEAR_ORDER.indexOf(opt.value) >= fi; });
 }
 
-// Check if country is selected (replaces isMatch)
-function isSelected(d) {
-  return S.selectedCountries.has(d.c3);
+function isMatch(d) {
+  if (!S.search) return false;
+  const q = S.search.toLowerCase();
+  return d.country.toLowerCase().includes(q) || d.c3.toLowerCase().includes(q);
 }
-
-// Fuzzy search for autocomplete
-function searchCountries(term) {
-  if (!term || term.length < 2) return [];
-  const q = term.toLowerCase();
-  return RAW_DATA
-    .filter(d =>
-      d.country.toLowerCase().includes(q) ||
-      d.c3.toLowerCase().includes(q) ||
-      d.region_wb.toLowerCase().includes(q)
-    )
-    .slice(0, 10)
-    .sort((a, b) => {
-      if (a.c3.toLowerCase() === q) return -1;
-      if (b.c3.toLowerCase() === q) return 1;
-      if (a.country.toLowerCase().startsWith(q)) return -1;
-      if (b.country.toLowerCase().startsWith(q)) return 1;
-      return a.country.localeCompare(b.country);
-    });
-}
-
-// Add country to selection
-function addCountry(c3) {
-  // Validate country exists
-  const country = RAW_DATA.find(d => d.c3 === c3);
-  if (!country) {
-    console.warn(`Invalid country code: ${c3}`);
-    return;
-  }
-
-  // Check for duplicate
-  if (S.selectedCountries.has(c3)) {
-    announceToScreenReader(`${country.country} is already selected`);
-    return;
-  }
-
-  // Check max limit
-  if (S.selectedCountries.size >= 20) {
-    alert('Maximum 20 countries allowed');
-    return;
-  }
-
-  S.selectedCountries.add(c3);
-  renderChips();
-  render(false);
-  stateToURL();
-
-  announceToScreenReader(`${country.country} added. ${S.selectedCountries.size} of 20 countries selected.`);
-}
-
-// Remove country from selection
-function removeCountry(c3) {
-  S.selectedCountries.delete(c3);
-  renderChips();
-  render(false);
-  stateToURL();
-
-  const country = RAW_DATA.find(d => d.c3 === c3);
-  if (country) {
-    announceToScreenReader(`${country.country} removed. ${S.selectedCountries.size} of 20 countries selected.`);
-  }
-}
-
-// Render chip container
-function renderChips() {
-  const container = document.getElementById('chipContainer');
-  const chipCount = document.getElementById('chipCount');
-
-  // Update count
-  chipCount.textContent = `${S.selectedCountries.size} / 20`;
-  chipCount.className = 'chip-count';
-  if (S.selectedCountries.size >= 19) {
-    chipCount.classList.add('max-warning');
-  }
-  if (S.selectedCountries.size === 20) {
-    container.classList.add('at-max');
-  } else {
-    container.classList.remove('at-max');
-  }
-
-  // Clear existing chips (keep label and count)
-  const existingChips = container.querySelectorAll('.chip');
-  existingChips.forEach(chip => chip.remove());
-
-  // Add chips for selected countries
-  const sorted = [...S.selectedCountries]
-    .map(c3 => RAW_DATA.find(d => d.c3 === c3))
-    .filter(Boolean)
-    .sort((a, b) => a.country.localeCompare(b.country));
-
-  sorted.forEach(country => {
-    const chip = document.createElement('div');
-    chip.className = 'chip';
-    chip.dataset.c3 = country.c3;
-    chip.setAttribute('role', 'listitem');
-
-    const dot = document.createElement('span');
-    dot.className = 'chip-dot';
-    dot.style.background = REGION_COLORS[country.region_wb] || '#999';
-
-    const text = document.createElement('span');
-    text.className = 'chip-text';
-    text.textContent = country.country;
-
-    const x = document.createElement('button');
-    x.className = 'chip-x';
-    x.textContent = '×';
-    x.setAttribute('aria-label', `Remove ${country.country}`);
-    x.setAttribute('tabindex', '0');
-    x.onclick = (e) => {
-      e.stopPropagation();
-      chip.classList.add('removing');
-      setTimeout(() => removeCountry(country.c3), 120);
-    };
-
-    chip.appendChild(dot);
-    chip.appendChild(text);
-    chip.appendChild(x);
-    container.appendChild(chip);
-  });
-}
-
-// Screen reader announcements
-function announceToScreenReader(message) {
-  const announcer = document.getElementById('sr-announcer');
-  if (announcer) {
-    announcer.textContent = message;
-    setTimeout(() => {
-      announcer.textContent = '';
-    }, 1000);
-  }
-}
-
 function fmtPop(p) {
   if (p >= 1e9) return (p/1e9).toFixed(1) + 'B';
   if (p >= 1e6) return (p/1e6).toFixed(1) + 'M';
@@ -1775,10 +1225,10 @@ function render(animate) {
 
   // === Dimming logic ===
   const hasRegionFilter = S.regionFilter !== 'all';
-  const hasSearch = S.selectedCountries.size > 0;
+  const hasSearch = S.search.length > 0;
 
   function dotOpacity(d) {
-    if (hasSearch) return isSelected(d) ? 0.92 : 0.06;
+    if (hasSearch) return isMatch(d) ? 0.92 : 0.06;
     return 0.82;
   }
 
@@ -1805,8 +1255,8 @@ function render(animate) {
     .attr('r', d => currentGetR(d))
     .attr('fill', d => REGION_COLORS[d.region_wb]||'#999')
     .attr('opacity', d => dotOpacity(d))
-    .attr('stroke', d => isSelected(d) ? '#BA3A1E' : 'rgba(255,255,255,0.7)')
-    .attr('stroke-width', d => isSelected(d) ? 2.5 : 0.8);
+    .attr('stroke', d => isMatch(d) ? '#BA3A1E' : 'rgba(255,255,255,0.7)')
+    .attr('stroke-width', d => isMatch(d) ? 2.5 : 0.8);
 
   // === SMART LABELS with collision detection ===
   // During zoom (animate=false), defer labels to avoid O(n²) on every frame
@@ -1822,11 +1272,11 @@ function renderLabels(data, zx, zy) {
   gLabels.selectAll('text').remove();
   if (!S.showLabels) return;
 
-  const hasSearch = S.selectedCountries.size > 0;
+  const hasSearch = S.search.length > 0;
 
   // Sort: search matches first, then by population (largest get label priority)
   const sorted = [...data].sort((a, b) => {
-    const am = isSelected(a) ? 1 : 0, bm = isSelected(b) ? 1 : 0;
+    const am = isMatch(a) ? 1 : 0, bm = isMatch(b) ? 1 : 0;
     if (bm !== am) return bm - am;
     return b.population - a.population;
   });
@@ -1842,7 +1292,7 @@ function renderLabels(data, zx, zy) {
     // Skip off-screen
     if (cx < -30 || cx > W + 30 || cy < -20 || cy > H + 20) return;
 
-    const searched = isSelected(d);
+    const searched = isMatch(d);
     const text = searched ? d.country : d.c3;
     const r = currentGetR(d);
     const lx = cx + r + 4;
@@ -2191,7 +1641,7 @@ function downloadChart(exportFilename) {
   const T = S.threshold;
   const yearStr = yearLabel();
   const xLabel = S.xAxis === 'base' ? S.baseYear : S.finalYear;
-  const hasSearch = S.selectedCountries.size > 0;
+  const hasSearch = S.search.length > 0;
 
   // Layout
   const padX = 80, padR = 50, titleH = 95;
@@ -2224,17 +1674,7 @@ function downloadChart(exportFilename) {
   if (S.regionFilter !== 'all') filters.push(REGION_SHORT[S.regionFilter] || S.regionFilter);
   if (S.incomeFilter !== 'all') filters.push(S.incomeFilter);
   if (S.hiddenRegions.size > 0) filters.push(S.hiddenRegions.size + ' regions hidden');
-  if (hasSearch) {
-    if (S.selectedCountries.size <= 5) {
-      const names = [...S.selectedCountries]
-        .map(c3 => RAW_DATA.find(d => d.c3 === c3)?.country)
-        .filter(Boolean)
-        .join(', ');
-      filters.push('Selected: ' + names);
-    } else {
-      filters.push(S.selectedCountries.size + ' countries selected');
-    }
-  }
+  if (hasSearch) filters.push('Search: ' + S.search);
 
  
   const s = [];
@@ -2300,11 +1740,11 @@ function downloadChart(exportFilename) {
   const sortedDots = [...data].sort((a,b) => eR(b) - eR(a));
   sortedDots.forEach(d => {
     const cx = exSc(xVal(d)), cy = eySc(giniChange(d)), r = eR(d);
-    const matched = hasSearch && isSelected(d);
+    const matched = hasSearch && isMatch(d);
     const dimmed = hasSearch && !matched;
     const opacity = dimmed ? 0.08 : (matched ? 0.9 : 0.75);
     const strokeCol = matched ? '#BA3A1E' : '#fff';
-    const strokeW = matched ? 2.5 : 1.2;  // Increased from 2/0.8 to 2.5/1.2
+    const strokeW = matched ? 2 : 0.8;
     const strokeOp = matched ? 1 : 0.7;
     s.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${REGION_COLORS[d.region_wb]||'#999'}" opacity="${opacity}" stroke="${strokeCol}" stroke-width="${strokeW}" stroke-opacity="${strokeOp}"/>`);
   });
@@ -2312,8 +1752,8 @@ function downloadChart(exportFilename) {
   // Smart labels — search matches get priority + full country names
   // Try right side first, then left side for dots near right edge
   const labelSorted = [...data].sort((a,b) => {
-    const am = hasSearch && isSelected(a) ? 1 : 0;
-    const bm = hasSearch && isSelected(b) ? 1 : 0;
+    const am = hasSearch && isMatch(a) ? 1 : 0;
+    const bm = hasSearch && isMatch(b) ? 1 : 0;
     if (bm !== am) return bm - am;
     return b.population - a.population;
   });
@@ -2324,7 +1764,7 @@ function downloadChart(exportFilename) {
     if (labelCount >= maxLabels) return;
     const cx = exSc(xVal(d)), cy = eySc(giniChange(d));
     if (cx < -20 || cx > chartW + 20 || cy < -10 || cy > chartH + 10) return;
-    const matched = hasSearch && isSelected(d);
+    const matched = hasSearch && isMatch(d);
     const dimmed = hasSearch && !matched;
     const text = matched ? d.country : d.c3;
     const r = eR(d);
@@ -2349,10 +1789,10 @@ function downloadChart(exportFilename) {
       if (collides) return;
     }
     placed.push(box);
-    const fill = matched ? '#BA3A1E' : '#333333';  // Darkened from #888882 to #333333
+    const fill = matched ? '#BA3A1E' : '#888882';
     const fw = matched ? '700' : '400';
-    const fs = matched ? '14' : '12';  // Increased from 11/9.5 to 14/12
-    const op = dimmed ? 0.15 : (matched ? 1.0 : 0.85);  // Increased from 0.08/0.7 to 0.15/0.85
+    const fs = matched ? '11' : '9.5';
+    const op = dimmed ? 0.08 : (matched ? 1 : 0.7);
     s.push(`<text x="${lx}" y="${ly}" font-family="sans-serif" font-size="${fs}" font-weight="${fw}" fill="${fill}" opacity="${op}">${escXml(text)}</text>`);
     labelCount++;
   });
@@ -2531,139 +1971,14 @@ function bindEvents() {
   document.getElementById('sizeBySelect').addEventListener('change', e => { S.sizeBy=e.target.value; update(); stateToURL(); });
   document.getElementById('labelToggle').addEventListener('change', e => { S.showLabels=e.target.checked; render(false); stateToURL(); });
 
-  // Autocomplete country search
+  // Search: re-render without resetting zoom so user can search within a zoomed view
   let searchDebounce;
-  let keyboardIndex = -1;
-  const searchInput = document.getElementById('countrySearch');
-  const autocompleteList = document.getElementById('autocomplete-list');
-
-  function closeDropdown() {
-    autocompleteList.classList.add('hidden');
-    searchInput.setAttribute('aria-expanded', 'false');
-    searchInput.removeAttribute('aria-activedescendant');
-    autocompleteList.innerHTML = '';
-    keyboardIndex = -1;
-  }
-
-  function openDropdown(results) {
-    // Clear previous results
-    autocompleteList.innerHTML = '';
-
-    if (results.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'autocomplete-empty';
-      empty.textContent = 'No matches found';
-      autocompleteList.appendChild(empty);
-    } else {
-      results.forEach(d => {
-        const item = document.createElement('div');
-        item.className = 'autocomplete-item';
-        item.dataset.c3 = d.c3;
-        item.id = `option-${d.c3}`;
-        item.setAttribute('role', 'option');
-        item.setAttribute('aria-selected', 'false');
-
-        const dot = document.createElement('span');
-        dot.className = 'autocomplete-dot';
-        dot.style.background = REGION_COLORS[d.region_wb] || '#999';
-
-        const name = document.createElement('span');
-        name.className = 'autocomplete-name';
-        name.textContent = d.country;
-
-        const c3 = document.createElement('span');
-        c3.className = 'autocomplete-c3';
-        c3.textContent = d.c3;
-
-        const region = document.createElement('span');
-        region.className = 'autocomplete-region';
-        region.textContent = d.region_wb;
-
-        item.appendChild(dot);
-        item.appendChild(name);
-        item.appendChild(c3);
-        item.appendChild(region);
-
-        // Add click handler
-        item.addEventListener('click', () => {
-          addCountry(d.c3);
-          searchInput.value = '';
-          S.searchTerm = '';
-          closeDropdown();
-        });
-
-        autocompleteList.appendChild(item);
-      });
-    }
-    autocompleteList.classList.remove('hidden');
-    searchInput.setAttribute('aria-expanded', 'true');
-    keyboardIndex = -1;
-  }
-
-  // Search input handler
-  searchInput.addEventListener('input', e => {
-    S.searchTerm = e.target.value.trim();
+  document.getElementById('searchInput').addEventListener('input', e => {
+    S.search = e.target.value.trim();
+    render(false);
     clearTimeout(searchDebounce);
-
-    if (S.searchTerm.length < 2) {
-      closeDropdown();
-      return;
-    }
-
-    searchDebounce = setTimeout(() => {
-      const results = searchCountries(S.searchTerm);
-      openDropdown(results);
-    }, 200);
+    searchDebounce = setTimeout(stateToURL, 400);
   });
-
-  // Keyboard navigation
-  searchInput.addEventListener('keydown', e => {
-    const items = autocompleteList.querySelectorAll('.autocomplete-item');
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (items.length === 0) return;
-
-      items.forEach(item => item.classList.remove('keyboard-focus'));
-      keyboardIndex = (keyboardIndex + 1) % items.length;
-      items[keyboardIndex].classList.add('keyboard-focus');
-      items[keyboardIndex].scrollIntoView({ block: 'nearest' });
-      searchInput.setAttribute('aria-activedescendant', items[keyboardIndex].id);
-    }
-    else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (items.length === 0) return;
-
-      items.forEach(item => item.classList.remove('keyboard-focus'));
-      keyboardIndex = keyboardIndex <= 0 ? items.length - 1 : keyboardIndex - 1;
-      items[keyboardIndex].classList.add('keyboard-focus');
-      items[keyboardIndex].scrollIntoView({ block: 'nearest' });
-      searchInput.setAttribute('aria-activedescendant', items[keyboardIndex].id);
-    }
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (keyboardIndex >= 0 && items[keyboardIndex]) {
-        addCountry(items[keyboardIndex].dataset.c3);
-        searchInput.value = '';
-        S.searchTerm = '';
-        closeDropdown();
-      }
-    }
-    else if (e.key === 'Escape') {
-      e.preventDefault();
-      closeDropdown();
-    }
-  });
-
-  // Click outside to close
-  document.addEventListener('click', e => {
-    if (!searchInput.contains(e.target) && !autocompleteList.contains(e.target)) {
-      closeDropdown();
-    }
-  });
-
-  // Initialize chips on page load
-  renderChips();
 
   // Zoom buttons
   document.getElementById('resetZoomBtn').addEventListener('click', resetZoom);
