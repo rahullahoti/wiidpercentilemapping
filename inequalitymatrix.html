@@ -1064,7 +1064,7 @@ body {
 <div class="page">
   <!-- HEADER -->
   <div class="header">
-  document.getElementById('mainHeadline').innerHTML = `Most countries reduced inequality since ${S.baseYear}`;
+    <h1 id="mainHeadline">Most countries reduced inequality since 1990</h1>
     <div class="divider"></div>
   </div>
 
@@ -1192,11 +1192,6 @@ body {
   <div class="analysis-section" id="analysisSection">
     <h2>What the data tells us</h2>
 
-    <button class="detail-toggle" id="detailToggle" type="button">Show detailed breakdown ▾</button>
-    <div class="detail-section hidden" id="detailSection">
-    <!-- Quadrant cards -->
-    <div class="quad-cards" id="quadCards"></div>
-
     <!-- Key takeaways (hierarchical: shock stat + supporting) -->
     <div class="takeaways" id="takeaways">
       <h3>Key findings</h3>
@@ -1215,6 +1210,11 @@ body {
       <h3 id="moversTitle">Biggest movers</h3>
       <div class="movers-grid" id="moversGrid"></div>
     </div>
+
+    <button class="detail-toggle" id="detailToggle" type="button">Show detailed breakdown ▾</button>
+    <div class="detail-section hidden" id="detailSection">
+    <!-- Quadrant cards -->
+    <div class="quad-cards" id="quadCards"></div>
 
     <!-- Regional summary (sorted by severity) -->
     <div class="regional-section">
