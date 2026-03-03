@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <style>
 :root {
@@ -50,9 +50,9 @@ body {
 }
 
 .page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 36px 80px;
+  padding: 40px 16px 80px;
 }
 
 /* === HEADER === */
@@ -68,8 +68,8 @@ body {
   margin-bottom: 8px;
 }
 .header h1 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 800;
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
   font-size: 1.85rem;
   line-height: 1.2;
   color: var(--text);
@@ -139,6 +139,34 @@ body {
 .tsw span::before { content:''; position: absolute; height: 12px; width: 12px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
 .tsw input:checked + span { background: var(--accent); }
 .tsw input:checked + span::before { transform: translateX(16px); }
+/* === OPTIONS POPOVER === */
+.opts-wrap { position: relative; }
+.opts-btn {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.84rem;
+  padding: 5px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-mid);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.opts-btn:hover, .opts-btn.active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+.opts-pop {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 14px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 100;
+  min-width: 360px;
+}
+.opts-pop.hidden { display: none; }
+.opts-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
 
 /* Filter tags */
 .filter-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 24px; align-items: center; }
@@ -631,13 +659,21 @@ body {
   font-size: 0.65rem; font-weight: 700;
 }
 
-/* === LEGEND (horizontal, below controls) === */
+/* === LEGEND (overlay inside chart) === */
 .legend-row {
+  position: absolute;
+  bottom: 40px;
+  left: 24px;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 16px;
-  margin-bottom: 16px;
+  gap: 3px 12px;
   align-items: center;
+  z-index: 10;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 5px 8px;
+  max-width: 280px;
 }
 .legend-row .lr-label {
   font-size: 0.7rem;
@@ -666,13 +702,10 @@ body {
   z-index: 1000; opacity: 0; transition: opacity 0.12s;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
-.tip .tip-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+.tip .tip-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 5px; font-family: 'Source Sans 3', sans-serif; }
 .tip .tip-r { display: flex; justify-content: space-between; gap: 14px; }
 .tip .tip-l { color: #AAA; }
 .tip .tip-v { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; }
-.tip .tip-badge { display: inline-block; padding: 1px 7px; border-radius: 2px; font-size: 0.66rem; font-weight: 500; margin-top: 5px; }
-.tip .tip-badge.obs { background: rgba(58,134,96,0.25); color: #7AD4A8; }
-.tip .tip-badge.ext { background: rgba(186,58,30,0.2); color: #F2A899; }
 
 /* Axis labels */
 .ax-label { font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; font-weight: 500; fill: var(--text-mid); }
@@ -684,12 +717,33 @@ body {
 .q-label { font-family: 'Source Sans 3', sans-serif; font-size: 11.5px; font-weight: 600; pointer-events: none; }
 /* Country labels on chart */
 .c-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 500; pointer-events: none; }
+/* === DETAIL COLLAPSE === */
+.detail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 28px 0 0;
+  padding: 7px 14px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  background: var(--surface-alt);
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.detail-toggle:hover { color: var(--text); border-color: var(--border); }
+.detail-section { margin-top: 16px; }
+.detail-section.hidden { display: none; }
+
 /* === BELOW-CHART ANALYSIS === */
 .analysis-section {
   margin-top: 40px;
 }
 .analysis-section h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
   margin-bottom: 20px;
@@ -756,7 +810,7 @@ body {
   margin-bottom: 36px;
 }
 .takeaways h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 12px;
@@ -796,7 +850,7 @@ body {
   margin-bottom: 36px;
 }
 .movers-section h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 12px;
@@ -841,7 +895,7 @@ body {
 /* Regional summary */
 .regional-section { margin-bottom: 36px; }
 .regional-section h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 12px;
@@ -898,7 +952,7 @@ body {
 .hero-card.accent .hero-label,
 .hero-card.accent .hero-sub { color: rgba(255,255,255,0.85); }
 .hero-card .hero-num {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 2.2rem;
   font-weight: 800;
   line-height: 1.1;
@@ -919,7 +973,7 @@ body {
 /* Spotlight section */
 .spotlight-section { margin-bottom: 36px; }
 .spotlight-section h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 4px;
@@ -986,22 +1040,6 @@ body {
 .spot-change.down { color: #2D7A50; }
 .spot-change.up { color: #C44536; }
 
-/* Movers filters */
-.movers-filters {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.movers-filters .ctrl { flex: 0 0 auto; }
-.movers-filters select {
-  font-size: 0.78rem;
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--surface);
-  font-family: inherit;
-}
-
 /* Counterfactual */
 .counterfactual {
   margin-top: 24px;
@@ -1012,7 +1050,7 @@ body {
   margin-bottom: 36px;
 }
 .counterfactual h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 6px;
@@ -1024,7 +1062,7 @@ body {
   line-height: 1.55;
 }
 .counterfactual .cf-big {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Source Sans 3', sans-serif;
   font-size: 1.8rem;
   font-weight: 800;
   color: #336B99;
@@ -1041,7 +1079,6 @@ body {
   .hero-stats { grid-template-columns: 1fr; }
   .hero-card .hero-num { font-size: 1.7rem; }
   .spot-row { grid-template-columns: 100px 1fr 50px; }
-  .movers-filters { flex-wrap: wrap; }
 }
 </style>
 </head>
@@ -1054,9 +1091,6 @@ body {
     <p class="dek" id="mainDek">Since 1990, most countries have reduced income inequality. But the gains are unevenly distributed — in South Asia and Sub-Saharan Africa, home to nearly half the world's population, many countries remain deeply unequal, and some are moving in the wrong direction.</p>
     <div class="divider"></div>
   </div>
-
-  <!-- HERO STAT -->
-  <div class="hero-stats" id="heroStats"></div>
 
   <!-- CONTROLS -->
   <div class="controls" id="controls">
@@ -1086,24 +1120,38 @@ body {
         <option value="2022" selected>2022</option>
       </select>
     </div>
-    <div class="ctrl">
-      <label>X-Axis</label>
-      <select id="xAxisSelect">
-        <option value="base">Base Year</option>
-        <option value="final">Final Year</option>
-      </select>
-    </div>
-    <div class="ctrl">
-      <label>Threshold</label>
-      <input type="number" id="thresholdInput" value="40" min="20" max="80" step="1">
-    </div>
-    <div class="ctrl">
-      <label>Bubble Size</label>
-      <select id="sizeBySelect">
-        <option value="none">Uniform</option>
-        <option value="population" selected>Population</option>
-        <option value="gdp">GDP per capita</option>
-      </select>
+    <div class="ctrl opts-wrap">
+      <label>&nbsp;</label>
+      <button class="opts-btn" id="optionsBtn" type="button">⚙ Options</button>
+      <div class="opts-pop hidden" id="optionsPop">
+        <div class="opts-row">
+          <div class="ctrl">
+            <label>X-Axis</label>
+            <select id="xAxisSelect">
+              <option value="base">Base Year</option>
+              <option value="final">Final Year</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <label>Threshold</label>
+            <input type="number" id="thresholdInput" value="40" min="20" max="80" step="1">
+          </div>
+          <div class="ctrl">
+            <label>Bubble Size</label>
+            <select id="sizeBySelect">
+              <option value="none">Uniform</option>
+              <option value="population" selected>Population</option>
+              <option value="gdp">GDP per capita</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <div class="toggle-wrap" style="padding-top:18px">
+              <label class="tsw"><input type="checkbox" id="labelToggle" checked><span></span></label>
+              <label class="tl" for="labelToggle">Labels</label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="ctrl search-ctrl">
       <label>Select Countries</label>
@@ -1121,12 +1169,7 @@ body {
       />
       <div id="autocomplete-list" class="autocomplete-dropdown hidden" role="listbox" aria-label="Country search results"></div>
     </div>
-    <div class="ctrl">
-      <div class="toggle-wrap">
-        <label class="tsw"><input type="checkbox" id="labelToggle" checked><span></span></label>
-        <label class="tl" for="labelToggle">Labels</label>
-      </div>
-    </div>
+
   </div>
 
   <!-- SELECTED COUNTRIES CHIPS -->
@@ -1141,11 +1184,6 @@ body {
   <!-- Screen reader announcer -->
   <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- LEGEND (horizontal) -->
-  <div class="legend-row" id="legendRow">
-    <span class="lr-label">Regions</span>
-  </div>
-
   <!-- GINI EXPLAINER -->
   <div class="gini-explainer">
     <span class="info-icon">i</span>
@@ -1159,6 +1197,7 @@ body {
 
   <!-- CHART -->
   <div class="chart-wrap" id="chartWrap">
+    <div class="legend-row" id="legendRow"><span class="lr-label">Regions</span></div>
     <div class="zoom-controls">
       <button class="zoom-btn" id="zoomInBtn" title="Zoom in">+</button>
       <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">−</button>
@@ -1180,10 +1219,15 @@ body {
     <div class="zoom-hint" id="zoomHint">Scroll to zoom · Drag to pan</div>
   </div>
 
+  <!-- HERO STAT -->
+  <div class="hero-stats" id="heroStats"></div>
+
   <!-- BELOW-CHART ANALYSIS -->
   <div class="analysis-section" id="analysisSection">
     <h2>What the data tells us</h2>
 
+    <button class="detail-toggle" id="detailToggle" type="button">Show detailed breakdown ▾</button>
+    <div class="detail-section hidden" id="detailSection">
     <!-- Quadrant cards -->
     <div class="quad-cards" id="quadCards"></div>
 
@@ -1203,16 +1247,6 @@ body {
     <!-- Biggest movers with filters -->
     <div class="movers-section">
       <h3 id="moversTitle">Biggest movers</h3>
-      <div class="movers-filters">
-        <div class="ctrl">
-          <label>Region</label>
-          <select id="moverRegionFilter"><option value="all">All Regions</option></select>
-        </div>
-        <div class="ctrl">
-          <label>Income Group</label>
-          <select id="moverIncomeFilter"><option value="all">All Income Groups</option></select>
-        </div>
-      </div>
       <div class="movers-grid" id="moversGrid"></div>
     </div>
 
@@ -1224,6 +1258,7 @@ body {
 
     <!-- Counterfactual -->
     <div class="counterfactual" id="counterfactual"></div>
+    </div><!-- /detail-section -->
   </div>
 
   <!-- SOURCE -->
@@ -1299,8 +1334,6 @@ function stateToURL() {
   if (S.xAxis !== DEFAULTS.xAxis) p.set('xa', S.xAxis);
   if (S.showLabels !== DEFAULTS.showLabels) p.set('l', '0');
   if (S.hiddenRegions.size > 0) p.set('hr', [...S.hiddenRegions].map(r => Object.keys(REGION_COLORS).indexOf(r)).join(','));
-  if (moverState.region !== 'all') p.set('mr', moverState.region);
-  if (moverState.income !== 'all') p.set('mi', moverState.income);
   const hash = p.toString();
   try { history.replaceState(null, '', hash ? '#' + hash : location.pathname + location.search); } catch(e) { /* sandboxed iframe */ }
 }
@@ -1349,8 +1382,6 @@ function stateFromURL() {
       if (i >= 0 && i < regionKeys.length) S.hiddenRegions.add(regionKeys[i]);
     });
   }
-  if (p.has('mr') && (p.get('mr') === 'all' || validRegions.has(p.get('mr')))) moverState.region = p.get('mr');
-  if (p.has('mi') && (p.get('mi') === 'all' || validIncomes.has(p.get('mi')))) moverState.income = p.get('mi');
   // Enforce finalYear > baseYear
   if (YEAR_ORDER.indexOf(S.finalYear) <= YEAR_ORDER.indexOf(S.baseYear)) {
     const bi = YEAR_ORDER.indexOf(S.baseYear);
@@ -1369,8 +1400,6 @@ function syncUIFromState() {
   document.getElementById('finalYearSelect').value = S.finalYear;
   document.getElementById('xAxisSelect').value = S.xAxis;
   document.getElementById('labelToggle').checked = S.showLabels;
-  document.getElementById('moverRegionFilter').value = moverState.region;
-  document.getElementById('moverIncomeFilter').value = moverState.income;
   updateFinalYearOptions();
   updateBaseYearOptions();
   S.hiddenRegions.forEach(r => {
@@ -1588,10 +1617,6 @@ function populateDropdowns() {
   incs.forEach(i => { const o = document.createElement('option'); o.value = i; o.textContent = i; is.appendChild(o); });
 
   // Mover filter dropdowns
-  const mrs = document.getElementById('moverRegionFilter');
-  regs.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = REGION_SHORT[r]; mrs.appendChild(o); });
-  const mis = document.getElementById('moverIncomeFilter');
-  incs.forEach(i => { const o = document.createElement('option'); o.value = i; o.textContent = i; mis.appendChild(o); });
 }
 
 function buildLegend() {
@@ -1618,7 +1643,7 @@ function measure() {
   if (isFS) {
     H = window.innerHeight - 80 - margin.top - margin.bottom;
   } else {
-    H = Math.min(680, Math.max(450, ww * 0.58)) - margin.top - margin.bottom;
+    H = Math.max(450, Math.round(window.innerHeight * 0.78) - margin.top - margin.bottom);
   }
 }
 
@@ -1915,15 +1940,9 @@ function showTip(ev, d) {
   const q = getQuadrant(d);
   tipEl.innerHTML = `
     <div class="tip-name">${d.country}</div>
-    <div style="font-size:0.68rem;padding:3px 7px;margin-bottom:6px;border-radius:3px;background:${q.color};color:#fff;display:inline-block">${q.note}</div>
+    <div class="tip-r"><span class="tip-l">Change</span><span class="tip-v" style="color:${cc};font-weight:600">${dir} ${Math.abs(giniChange(d)).toFixed(1)} pts</span></div>
     <div class="tip-r"><span class="tip-l">Gini ${S.finalYear}</span><span class="tip-v">${giniFinal(d).toFixed(1)}</span></div>
-    <div class="tip-r"><span class="tip-l">Gini ${S.baseYear}</span><span class="tip-v">${giniBase(d) != null ? giniBase(d).toFixed(1) : '—'}</span></div>
-    <div class="tip-r"><span class="tip-l">Change</span><span class="tip-v" style="color:${cc}">${dir} ${Math.abs(giniChange(d)).toFixed(1)} pts</span></div>
-    <div class="tip-r"><span class="tip-l">Population</span><span class="tip-v">${fmtPop(d.population)}</span></div>
-    <div class="tip-r"><span class="tip-l">GDP/capita (PPP)</span><span class="tip-v">${fmtGdp(d.gdp)}</span></div>
-    <div class="tip-r"><span class="tip-l">Region</span><span class="tip-v">${REGION_SHORT[d.region_wb]}</span></div>
-    <div class="tip-r"><span class="tip-l">Income group</span><span class="tip-v">${d.incomegroup}</span></div>
-    <span class="tip-badge ${d.interpolated==='No'?'obs':'ext'}">${d.interpolated==='No'?'● Observed data':'○ Extrapolated estimate'}</span>`;
+    <div class="tip-r"><span class="tip-l">Gini ${S.baseYear}</span><span class="tip-v">${giniBase(d) != null ? giniBase(d).toFixed(1) : '—'}</span></div>`;
   tipEl.style.opacity = '1';
 }
 function moveTip(ev) {
@@ -2137,13 +2156,9 @@ function buildAnalysis() {
 }
 
 // ===== MOVERS (with own filters) =====
-let moverState = { region: 'all', income: 'all' };
-
 function buildMovers() {
   const data = filtered();
   let moverData = data;
-  if (moverState.region !== 'all') moverData = moverData.filter(d => d.region_wb === moverState.region);
-  if (moverState.income !== 'all') moverData = moverData.filter(d => d.incomegroup === moverState.income);
 
   if (moverData.length === 0) {
     document.getElementById('moversGrid').innerHTML = '<p style="color:var(--text-faint);font-size:0.85rem;">No countries match the selected filters.</p>';
@@ -2538,7 +2553,29 @@ function bindEvents() {
   document.getElementById('xAxisSelect').addEventListener('change', e => { S.xAxis=e.target.value; update(); stateToURL(); });
   document.getElementById('thresholdInput').addEventListener('change', e => { S.threshold=Math.min(80, Math.max(20, parseFloat(e.target.value)||40)); e.target.value=S.threshold; update(); stateToURL(); });
   document.getElementById('sizeBySelect').addEventListener('change', e => { S.sizeBy=e.target.value; update(); stateToURL(); });
-  document.getElementById('labelToggle').addEventListener('change', e => { S.showLabels=e.target.checked; render(false); stateToURL(); });
+  // Detail section toggle
+  document.getElementById('detailToggle').addEventListener('click', function() {
+    const sec = document.getElementById('detailSection');
+    const hidden = sec.classList.toggle('hidden');
+    this.textContent = hidden ? 'Show detailed breakdown ▾' : 'Hide detailed breakdown ▴';
+  });
+
+    // Options popover toggle
+  const optsBtnEl = document.getElementById('optionsBtn');
+  const optsPopEl = document.getElementById('optionsPop');
+  optsBtnEl.addEventListener('click', e => {
+    e.stopPropagation();
+    optsPopEl.classList.toggle('hidden');
+    optsBtnEl.classList.toggle('active');
+  });
+  document.addEventListener('click', e => {
+    if (!optsPopEl.contains(e.target) && e.target !== optsBtnEl) {
+      optsPopEl.classList.add('hidden');
+      optsBtnEl.classList.remove('active');
+    }
+  });
+
+    document.getElementById('labelToggle').addEventListener('change', e => { S.showLabels=e.target.checked; render(false); stateToURL(); });
 
   // Autocomplete country search
   let searchDebounce;
@@ -2719,18 +2756,6 @@ function bindEvents() {
     if (e.key === 'Escape' && document.getElementById('chartWrap').classList.contains('fullscreen')) {
       toggleFullscreen();
     }
-  });
-
-  // Mover filters (independent of main chart filters)
-  document.getElementById('moverRegionFilter').addEventListener('change', e => {
-    moverState.region = e.target.value;
-    buildMovers();
-    stateToURL();
-  });
-  document.getElementById('moverIncomeFilter').addEventListener('change', e => {
-    moverState.income = e.target.value;
-    buildMovers();
-    stateToURL();
   });
 
   let rt;
