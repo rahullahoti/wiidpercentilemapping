@@ -978,10 +978,12 @@ body {
 }
 .spot-bar-1990 {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  width: 2px;
   height: 100%;
-  background: rgba(0,0,0,0.14);
-  border-right: 2px dashed var(--text-faint);
+  background: rgba(0,0,0,0.45);
+  z-index: 2;
+  border-radius: 1px;
 }
 .spot-bar-2022 {
   position: absolute;
@@ -998,6 +1000,18 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--text);
+}
+.spot-bar-base-label {
+  position: absolute;
+  bottom: 1px;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  color: rgba(0,0,0,0.5);
+  white-space: nowrap;
+  z-index: 3;
+  pointer-events: none;
+  line-height: 1;
 }
 .spot-change {
   text-align: right;
@@ -2064,8 +2078,9 @@ function buildAnalysis() {
           <div class="spot-pop">${fmtPop(d.population)}</div>
         </div>
         <div class="spot-bar-wrap">
-          <div class="spot-bar-1990" style="width:${wBase}%"></div>
           <div class="spot-bar-2022" style="width:${wFinal}%;background:${barColor}"></div>
+          <div class="spot-bar-1990" style="left:${wBase}%"></div>
+          ${giniBase(d) != null ? `<div class="spot-bar-base-label" style="left:${wBase}%">${giniBase(d).toFixed(1)}</div>` : ''}
           <div class="spot-bar-label">${giniFinal(d).toFixed(1)}</div>
         </div>
         <div class="spot-change ${cls}">${dir} ${Math.abs(chg).toFixed(1)}</div>
