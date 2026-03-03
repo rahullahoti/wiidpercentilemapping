@@ -639,8 +639,8 @@ body {
 /* === LEGEND (overlay inside chart) === */
 .legend-row {
   position: absolute;
-  bottom: 40px;
-  left: 24px;
+  top: 48px;
+  right: 16px;
   display: flex;
   flex-wrap: wrap;
   gap: 3px 12px;
@@ -675,23 +675,23 @@ body {
   position: fixed; pointer-events: none;
   background: rgba(30,30,28,0.94); color: #fff;
   padding: 12px 16px; border-radius: 6px;
-  font-size: 0.8rem; line-height: 1.55; max-width: 300px;
+  font-size: 0.8rem; line-height: 1.55; max-width: 180px;
   z-index: 1000; opacity: 0; transition: opacity 0.12s;
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .tip .tip-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 5px; font-family: 'Source Sans 3', sans-serif; }
 .tip .tip-r { display: flex; justify-content: space-between; gap: 14px; }
 .tip .tip-l { color: #AAA; }
-.tip .tip-v { font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; }
+.tip .tip-v { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
 
 /* Axis labels */
-.ax-label { font-family: 'Source Sans 3', sans-serif; font-size: 12.5px; font-weight: 500; fill: var(--text-mid); }
+.ax-label { font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 500; fill: var(--text-mid); }
 /* Axis tick styling via CSS instead of per-render JS */
 .gx text, .gy text { font-family: 'Source Sans 3', sans-serif; font-size: 11px; fill: var(--text-light); }
 .gx line, .gy line { stroke: #E8E6DF; stroke-dasharray: 2,3; }
 .gx .domain, .gy .domain { stroke: #C8C5BA; }
 /* Quadrant labels */
-.q-label { font-family: 'Source Sans 3', sans-serif; font-size: 11.5px; font-weight: 600; pointer-events: none; }
+.q-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; pointer-events: none; }
 /* Country labels on chart */
 .c-label { font-family: 'Source Sans 3', sans-serif; font-size: 10px; font-weight: 500; pointer-events: none; }
 /* === DETAIL COLLAPSE === */
@@ -1163,7 +1163,7 @@ body {
 
   <!-- CHART -->
   <div class="chart-wrap" id="chartWrap">
-    <div class="legend-row" id="legendRow"><span class="lr-label">Regions</span></div>
+    <div class="legend-row" id="legendRow"></div>
     <div class="zoom-controls">
       <button class="zoom-btn" id="zoomInBtn" title="Zoom in">+</button>
       <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">−</button>
@@ -1747,8 +1747,8 @@ function render(animate) {
   }
 
   // Axis labels
-  g.select('.xl').text(`Lower inequality  \u2190  Gini index (${S.xAxis === 'base' ? S.baseYear : S.finalYear})  \u2192  Higher inequality`);
-  g.select('.yl').text(`\u2190 Declined          Change in Gini, ${yearLabel()}          Rose \u2192`);
+  g.select('.xl').text(`← Lower inequality · Gini (${S.xAxis === 'base' ? S.baseYear : S.finalYear}) · Higher →`);
+  g.select('.yl').text('Change in Gini');
 
   // Quadrant fills
   const tx = zx(T), ty = zy(0);
@@ -1769,10 +1769,10 @@ function render(animate) {
   // Quadrant labels — anchored to quadrant corners
   const p = 8;
   const qlX1 = Math.max(p, tx - 160), qlX2 = Math.min(W - p, tx + 160);
-  gQuad.select('.ql-ll').attr('x',p).attr('y',H-p).text('Lower & Declining \u2713').attr('fill','#2D7A50').attr('opacity',0.7);
-  gQuad.select('.ql-lh').attr('x',p).attr('y',p+12).text('Lower & Rising \u26A0').attr('fill','#C47F17').attr('opacity',0.7);
-  gQuad.select('.ql-hl').attr('x',W-p).attr('y',H-p).attr('text-anchor','end').text('Higher & Declining \u2198').attr('fill','#336B99').attr('opacity',0.7);
-  gQuad.select('.ql-hh').attr('x',W-p).attr('y',p+12).attr('text-anchor','end').text('Higher & Rising \u2717').attr('fill','#C44536').attr('opacity',0.7);
+  gQuad.select('.ql-ll').attr('x',p).attr('y',H-p).text('IMPROVING').attr('fill','#2D7A50').attr('opacity',0.55);
+  gQuad.select('.ql-lh').attr('x',p).attr('y',p+14).text('LOW · RISING').attr('fill','#C47F17').attr('opacity',0.55);
+  gQuad.select('.ql-hl').attr('x',W-p).attr('y',H-p).attr('text-anchor','end').text('HIGH · IMPROVING').attr('fill','#336B99').attr('opacity',0.55);
+  gQuad.select('.ql-hh').attr('x',W-p).attr('y',p+14).attr('text-anchor','end').text('WORSENING').attr('fill','#C44536').attr('opacity',0.55);
 
   // === Dimming logic ===
   const hasRegionFilter = S.regionFilter !== 'all';
@@ -1792,7 +1792,7 @@ function render(animate) {
     .attr('cy', d => zy(giniChange(d)))
     .attr('r', 0)
     .attr('fill', d => REGION_COLORS[d.region_wb]||'#999')
-    .attr('stroke','#fff').attr('stroke-width',0.8)
+    .attr('stroke','#fff').attr('stroke-width',1)
     .attr('cursor','pointer')
     .on('mouseover', showTip)
     .on('mousemove', moveTip)
@@ -1806,8 +1806,8 @@ function render(animate) {
     .attr('r', d => currentGetR(d))
     .attr('fill', d => REGION_COLORS[d.region_wb]||'#999')
     .attr('opacity', d => dotOpacity(d))
-    .attr('stroke', d => isSelected(d) ? '#BA3A1E' : 'rgba(255,255,255,0.7)')
-    .attr('stroke-width', d => isSelected(d) ? 2.5 : 0.8);
+    .attr('stroke', d => isSelected(d) ? '#BA3A1E' : '#fff')
+    .attr('stroke-width', d => isSelected(d) ? 2.5 : 1);
 
   // === SMART LABELS with collision detection ===
   // During zoom (animate=false), defer labels to avoid O(n²) on every frame
@@ -1835,7 +1835,7 @@ function renderLabels(data, zx, zy) {
   const placed = []; // bounding boxes of placed labels
   const PAD_X = 2, PAD_Y = 1;
   const zoomK = currentTransform.k;
-  const fontSize = Math.min(11, 9.5 * Math.min(zoomK, 1.4));
+  const fontSize = Math.min(12, 11 * Math.min(zoomK, 1.4));
   const charW = fontSize < 10.5 ? 5.2 : 5.8;
 
   sorted.forEach(d => {
@@ -1876,7 +1876,7 @@ function renderLabels(data, zx, zy) {
       .text(text)
       .attr('opacity', opacity)
       .attr('font-weight', searched ? '700' : '400')
-      .attr('fill', searched ? '#BA3A1E' : 'var(--text-light)')
+      .attr('fill', searched ? '#BA3A1E' : 'var(--text-mid)')
       .attr('font-size', fontSize + 'px');
   });
 }
