@@ -1772,7 +1772,7 @@ function render(animate) {
   gQuad.select('.ql-ll').attr('x',p).attr('y',H-p).text('IMPROVING').attr('fill','#2D7A50').attr('opacity',0.55);
   gQuad.select('.ql-lh').attr('x',p).attr('y',p+14).text('LOW · RISING').attr('fill','#C47F17').attr('opacity',0.55);
   gQuad.select('.ql-hl').attr('x',W-p).attr('y',H-p).attr('text-anchor','end').text('HIGH · IMPROVING').attr('fill','#336B99').attr('opacity',0.55);
-  gQuad.select('.ql-hh').attr('x',W-p).attr('y',p+14).attr('text-anchor','end').text('WORSENING').attr('fill','#C44536').attr('opacity',0.55);
+  gQuad.select('.ql-hh').attr('x',W-p).attr('y', Math.round(H * 0.18)).attr('text-anchor','end').text('WORSENING').attr('fill','#C44536').attr('opacity',0.55);
 
   // === Dimming logic ===
   const hasRegionFilter = S.regionFilter !== 'all';
