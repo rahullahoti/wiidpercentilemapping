@@ -1,16 +1,16 @@
 """
-Generate extended rawData and countriesInfo JSON from percentiledata.csv.
-Adds region and income percentile fields alongside global percentile.
+Generate extended rawData and countriesInfo JSON from percentiledata-withregions.csv.
+Includes country data + region/income group aggregates as first-class entities.
 
 Usage: python generate_data.py
-Output: rawdata_extended.js (paste into index.html lines 581-582)
+Output: rawdata_extended.js (paste into index.html lines 610-611)
 """
 
 import csv
 import json
 import os
 
-CSV_PATH = os.path.join(os.path.dirname(__file__), 'percentiledata.csv')
+CSV_PATH = os.path.join(os.path.dirname(__file__), 'percentiledata-withregions.csv')
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'rawdata_extended.js')
 
 # Mapping from CSV column suffixes to year keys
@@ -20,6 +20,14 @@ YEAR_MAP = {
     '10': '2010',
     '19': '2019',
     '22': '2022',
+}
+
+# Filter out junk aggregate names (header row leak etc.)
+SKIP_NAMES = {'incomegroup', 'region_wb', ''}
+
+# Normalize aggregate names (CSV has "Latin American" instead of "Latin America")
+NAME_FIXES = {
+    'Latin American and the Caribbean': 'Latin America and the Caribbean',
 }
 
 def parse_int_or_none(val):
@@ -32,32 +40,39 @@ def parse_int_or_none(val):
         return None
 
 def main():
-    raw_data = {}       # {country: {year: [{percentile, global, region, income}, ...]}}
-    countries_info = {}  # {country: {region, incomegroup}}
+    raw_data = {}       # {name: {year: [{percentile, global, region, income}, ...]}}
+    countries_info = {}  # {name: {region, incomegroup, type?}}
 
     with open(CSV_PATH, 'r', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            country = row['country'].strip()
-            if not country:
+            name = row['country'].strip()
+            if not name or name in SKIP_NAMES:
                 continue
+            name = NAME_FIXES.get(name, name)
 
-            # Build countriesInfo (only need once per country)
-            if country not in countries_info:
-                region = row.get('region_wb', '').strip()
-                incomegroup = row.get('incomegroup', '').strip()
-                countries_info[country] = {
-                    'region': region if region else None,
-                    'incomegroup': incomegroup if incomegroup else None,
-                }
+            area = row.get('area', '').strip()  # empty=country, "Region", "Income group"
 
-            if country not in raw_data:
-                raw_data[country] = {}
+            # Build countriesInfo (only need once per entity)
+            if name not in countries_info:
+                if area == 'Region':
+                    countries_info[name] = {'region': name, 'type': 'region'}
+                elif area == 'Income group':
+                    countries_info[name] = {'incomegroup': name, 'type': 'income'}
+                else:
+                    # Country
+                    region = row.get('region_wb', '').strip()
+                    incomegroup = row.get('incomegroup', '').strip()
+                    countries_info[name] = {
+                        'region': region if region else None,
+                        'incomegroup': incomegroup if incomegroup else None,
+                    }
+
+            if name not in raw_data:
+                raw_data[name] = {}
 
             # Parse p_country to get the domestic percentile number
             p_country_raw = row.get('p_country', '').strip()
-            # p_country can be "Contact 1", "Contact 2", "3", "4", etc.
-            # Extract the numeric part
             if p_country_raw.startswith('Contact '):
                 percentile = parse_int_or_none(p_country_raw.replace('Contact ', ''))
             else:
@@ -75,27 +90,26 @@ def main():
                 if global_val is None and region_val is None and income_val is None:
                     continue
 
-                if year_key not in raw_data[country]:
-                    raw_data[country][year_key] = []
+                if year_key not in raw_data[name]:
+                    raw_data[name][year_key] = []
 
                 point = {'percentile': percentile}
                 if global_val is not None: point['global'] = global_val
                 if region_val is not None: point['region'] = region_val
                 if income_val is not None: point['income'] = income_val
-                raw_data[country][year_key].append(point)
+                raw_data[name][year_key].append(point)
 
     # Sort data points by percentile within each year
-    for country in raw_data:
-        for year in raw_data[country]:
-            raw_data[country][year].sort(key=lambda x: x['percentile'])
+    for name in raw_data:
+        for year in raw_data[name]:
+            raw_data[name][year].sort(key=lambda x: x['percentile'])
 
-    # Remove countries_info entries with None values
-    for country in countries_info:
-        info = countries_info[country]
-        if info['region'] is None:
-            del info['region']
-        if info['incomegroup'] is None:
-            del info['incomegroup']
+    # Clean up countries_info: remove None values for countries
+    for name in countries_info:
+        info = countries_info[name]
+        for key in list(info.keys()):
+            if info[key] is None:
+                del info[key]
 
     # Generate JS output
     raw_json = json.dumps(raw_data, separators=(',', ':'))
@@ -107,18 +121,27 @@ def main():
         f.write(output)
 
     # Stats
-    num_countries = len(raw_data)
+    num_countries = sum(1 for v in countries_info.values() if 'type' not in v)
+    num_aggregates = sum(1 for v in countries_info.values() if 'type' in v)
     total_points = sum(len(pts) for c in raw_data.values() for pts in c.values())
     file_size = os.path.getsize(OUTPUT_PATH)
     print(f"Generated {OUTPUT_PATH}")
-    print(f"  Countries: {num_countries}")
+    print(f"  Countries: {num_countries}, Aggregates: {num_aggregates}")
     print(f"  Total data points: {total_points}")
     print(f"  File size: {file_size / 1024 / 1024:.1f} MB")
 
-    # Spot-check India
+    # List aggregates
+    for name, info in sorted(countries_info.items()):
+        if 'type' in info:
+            print(f"  Aggregate: {name} ({info['type']})")
+
+    # Spot-check
     if 'India' in raw_data and '2022' in raw_data['India']:
         sample = raw_data['India']['2022'][:3]
         print(f"  Sample (India 2022 first 3): {json.dumps(sample)}")
+    if 'South Asia' in raw_data and '2022' in raw_data['South Asia']:
+        sample = raw_data['South Asia']['2022'][:3]
+        print(f"  Sample (South Asia 2022 first 3): {json.dumps(sample)}")
 
 if __name__ == '__main__':
     main()
