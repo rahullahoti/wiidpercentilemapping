@@ -2024,15 +2024,15 @@ function render(animate) {
   // x bands: 0->txL (low), txL->txH (med), txH->W (high)
   // y bands: 0->tyRis (ris), tyRis->tyDec (sta), tyDec->H (dec)
   const cells = [
-    { x:0,    y:0,     w:clamp(txL),      h:clamp(tyRis),       fill:'#fdf4e0' },  // low-ris
-    { x:0,    y:clamp(tyRis), w:clamp(txL), h:clampH(tyRis,tyDec), fill:'#eef5f1' }, // low-sta
-    { x:0,    y:clamp(tyDec), w:clamp(txL), h:clamp(H-tyDec),    fill:'#e8f5ee' },  // low-dec
-    { x:clamp(txL), y:0, w:clampW(txL,txH), h:clamp(tyRis),      fill:'#faeee8' },  // med-ris
-    { x:clamp(txL), y:clamp(tyRis), w:clampW(txL,txH), h:clampH(tyRis,tyDec), fill:'#f0f2f5' }, // med-sta
-    { x:clamp(txL), y:clamp(tyDec), w:clampW(txL,txH), h:clamp(H-tyDec), fill:'#e8f0f8' }, // med-dec
-    { x:clamp(txH), y:0, w:clamp(W-txH),   h:clamp(tyRis),       fill:'#fce8e8' },  // high-ris
-    { x:clamp(txH), y:clamp(tyRis), w:clamp(W-txH), h:clampH(tyRis,tyDec), fill:'#fdf3e0' }, // high-sta
-    { x:clamp(txH), y:clamp(tyDec), w:clamp(W-txH), h:clamp(H-tyDec), fill:'#e8f2fc' }, // high-dec
+    { x:0,    y:0,     w:clamp(txL),      h:clamp(tyRis),       fill:QUADRANT_DEFS.find(q=>q.id==='low-ris').bg  },
+    { x:0,    y:clamp(tyRis), w:clamp(txL), h:clampH(tyRis,tyDec), fill:QUADRANT_DEFS.find(q=>q.id==='low-sta').bg },
+    { x:0,    y:clamp(tyDec), w:clamp(txL), h:clamp(H-tyDec),    fill:QUADRANT_DEFS.find(q=>q.id==='low-dec').bg  },
+    { x:clamp(txL), y:0, w:clampW(txL,txH), h:clamp(tyRis),      fill:QUADRANT_DEFS.find(q=>q.id==='med-ris').bg  },
+    { x:clamp(txL), y:clamp(tyRis), w:clampW(txL,txH), h:clampH(tyRis,tyDec), fill:QUADRANT_DEFS.find(q=>q.id==='med-sta').bg },
+    { x:clamp(txL), y:clamp(tyDec), w:clampW(txL,txH), h:clamp(H-tyDec), fill:QUADRANT_DEFS.find(q=>q.id==='med-dec').bg },
+    { x:clamp(txH), y:0, w:clamp(W-txH),   h:clamp(tyRis),       fill:QUADRANT_DEFS.find(q=>q.id==='high-ris').bg },
+    { x:clamp(txH), y:clamp(tyRis), w:clamp(W-txH), h:clampH(tyRis,tyDec), fill:QUADRANT_DEFS.find(q=>q.id==='high-sta').bg },
+    { x:clamp(txH), y:clamp(tyDec), w:clamp(W-txH), h:clamp(H-tyDec), fill:QUADRANT_DEFS.find(q=>q.id==='high-dec').bg }
   ];
   cells.forEach(c => {
     if (c.w > 0 && c.h > 0) gQuad.insert('rect',':first-child').attr('x',c.x).attr('y',c.y).attr('width',c.w).attr('height',c.h).attr('fill',c.fill).attr('opacity',qa);
@@ -2498,8 +2498,8 @@ function downloadChart(exportFilename) {
     return;
   }
 
-  const DPR = 2;
-  const EW = 1600, EH = 900;
+  const DPR = 3;
+  const EW = 1600, EH = 1000;
   const TL = S.thresholdLow;
   const TH = S.thresholdHigh;
   const yearStr = yearLabel();
@@ -2510,7 +2510,7 @@ function downloadChart(exportFilename) {
   const padX = 80, padR = 50, titleH = 85;
   const chartT = titleH + 5;
   const chartW = EW - padX - padR;
-  const legendH = S.sizeBy !== 'none' ? 100 : 60;
+  const legendH = S.sizeBy !== 'none' ? 130 : 80;
   const sourceH = 52;
   const chartH = EH - chartT - legendH - sourceH - 16;
   const chartB = chartT + chartH;
@@ -2524,7 +2524,7 @@ function downloadChart(exportFilename) {
   const eySc = d3.scaleLinear().domain([Math.min(ye[0]-yp, -25), Math.max(ye[1]+yp, 20)]).range([chartH, 0]);
   const popE = d3.extent(data, d => d.population);
   const gdpE = d3.extent(data, d => d.gdp);
-  const erPop = d3.scaleSqrt().domain([0, popE[1]]).range([3, 28]);
+  const erPop = d3.scaleSqrt().domain([0, popE[1]]).range([4, 34]);
   const erGdp = d3.scaleSqrt().domain([0, gdpE[1]]).range([3, 18]);
   function eR(d) {
     if (S.sizeBy === 'population') return erPop(d.population);
@@ -2575,14 +2575,14 @@ function downloadChart(exportFilename) {
   const clampW_e = (x, x2) => Math.max(0, Math.min(x2, chartW) - Math.max(0, x));
   const clampH_e = (y, y2) => Math.max(0, Math.min(y2, chartH) - Math.max(0, y));
   [
-    { x:0,       y:0,        w:txL_e,           h:tyRis_e,                  fill:'#fdf4e0' },
-    { x:0,       y:tyRis_e,  w:txL_e,           h:clampH_e(tyRis_e,tyDec_e),fill:'#eef5f1' },
-    { x:0,       y:tyDec_e,  w:txL_e,           h:chartH-tyDec_e,           fill:'#e8f5ee' },
-    { x:txL_e,   y:0,        w:clampW_e(txL_e,txH_e), h:tyRis_e,            fill:'#faeee8' },
-    { x:txL_e,   y:tyRis_e,  w:clampW_e(txL_e,txH_e), h:clampH_e(tyRis_e,tyDec_e), fill:'#f0f2f5' },
-    { x:txL_e,   y:tyDec_e,  w:clampW_e(txL_e,txH_e), h:chartH-tyDec_e,    fill:'#e8f0f8' },
-    { x:txH_e,   y:0,        w:chartW-txH_e,    h:tyRis_e,                  fill:'#fce8e8' },
-    { x:txH_e,   y:tyRis_e,  w:chartW-txH_e,    h:clampH_e(tyRis_e,tyDec_e),fill:'#fdf3e0' },
+    { x:0,       y:0,        w:txL_e,           h:tyRis_e,                  fill:QUADRANT_DEFS.find(q=>q.id==='low-ris').bg  },
+    { x:0,       y:tyRis_e,  w:txL_e,           h:clampH_e(tyRis_e,tyDec_e),fill:QUADRANT_DEFS.find(q=>q.id==='low-sta').bg },
+    { x:0,       y:tyDec_e,  w:txL_e,           h:chartH-tyDec_e,           fill:QUADRANT_DEFS.find(q=>q.id==='low-dec').bg  },
+    { x:txL_e,   y:0,        w:clampW_e(txL_e,txH_e), h:tyRis_e,            fill:QUADRANT_DEFS.find(q=>q.id==='med-ris').bg  },
+    { x:txL_e,   y:tyRis_e,  w:clampW_e(txL_e,txH_e), h:clampH_e(tyRis_e,tyDec_e), fill:QUADRANT_DEFS.find(q=>q.id==='med-sta').bg },
+    { x:txL_e,   y:tyDec_e,  w:clampW_e(txL_e,txH_e), h:chartH-tyDec_e,    fill:QUADRANT_DEFS.find(q=>q.id==='med-dec').bg },
+    { x:txH_e,   y:0,        w:chartW-txH_e,    h:tyRis_e,                  fill:QUADRANT_DEFS.find(q=>q.id==='high-ris').bg },
+    { x:txH_e,   y:tyRis_e,  w:chartW-txH_e,    h:clampH_e(tyRis_e,tyDec_e),fill:QUADRANT_DEFS.find(q=>q.id==='high-sta').bg },
     { x:txH_e,   y:tyDec_e,  w:chartW-txH_e,    h:chartH-tyDec_e,           fill:'#e8f2fc' },
   ].forEach(q => {
     if (q.w > 0 && q.h > 0) s.push(`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${q.fill}" opacity="0.65"/>`);
@@ -2618,7 +2618,7 @@ function downloadChart(exportFilename) {
 
   // Axis labels
   s.push(`<text x="${chartW/2}" y="${chartH+38}" font-family="sans-serif" font-size="12" font-weight="500" fill="#555550" text-anchor="middle">Gini index, ${escXml(xLabel)} (0 = equal, 100 = unequal)</text>`);
-  s.push(`<g transform="translate(-54,${chartH/2}) rotate(-90)"><text font-family="sans-serif" font-size="12" font-weight="500" fill="#555550" text-anchor="middle">Change in Gini, ${escXml(yearStr)}</text></g>`);
+  s.push(`<g transform="translate(-54,${chartH/2}) rotate(-90)"><text font-family="sans-serif" font-size="14" font-weight="600" fill="#444440" text-anchor="middle">Change in Gini, ${escXml(yearStr)}</text></g>`);
 
   // Dots — large behind small
   const sortedDots = [...data].sort((a,b) => eR(b) - eR(a));
@@ -2630,7 +2630,8 @@ function downloadChart(exportFilename) {
     const strokeCol = matched ? '#BA3A1E' : '#fff';
     const strokeW = matched ? 2.5 : 1.2;  // Increased from 2/0.8 to 2.5/1.2
     const strokeOp = matched ? 1 : 0.7;
-    s.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${REGION_COLORS[d.region_wb]||'#999'}" opacity="${opacity}" stroke="${strokeCol}" stroke-width="${strokeW}" stroke-opacity="${strokeOp}"/>`);
+    s.push(`<circle cx="${cx}" cy="${cy}" r="${r+1.5}" fill="white" opacity="0.65"/>`);
+  s.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${REGION_COLORS[d.region_wb]||'#999'}" opacity="${opacity}" stroke="${strokeCol}" stroke-width="${strokeW}" stroke-opacity="${strokeOp}"/>`);
   });
 
   // Smart labels — search matches get priority + full country names
@@ -2642,7 +2643,7 @@ function downloadChart(exportFilename) {
     return b.population - a.population;
   });
   const placed = [];
-  const maxLabels = Math.min(30, data.length);
+  const maxLabels = Math.min(100, data.length);
   let labelCount = 0;
   labelSorted.forEach(d => {
     if (labelCount >= maxLabels) return;
@@ -2676,8 +2677,9 @@ function downloadChart(exportFilename) {
     placed.push(box);
     const fill = matched ? '#BA3A1E' : '#333333';  // Darkened from #888882 to #333333
     const fw = matched ? '700' : '400';
-    const fs = matched ? '14' : '12';  // Increased from 11/9.5 to 14/12
+    const fs = matched ? '16' : '14';
     const op = dimmed ? 0.15 : (matched ? 1.0 : 0.85);  // Increased from 0.08/0.7 to 0.15/0.85
+    s.push(`<text x="${lx}" y="${ly}" font-family="sans-serif" font-size="${fs}" font-weight="${fw}" fill="white" stroke="white" stroke-width="3.5" opacity="${op}">${escXml(text)}</text>`);
     s.push(`<text x="${lx}" y="${ly}" font-family="sans-serif" font-size="${fs}" font-weight="${fw}" fill="${fill}" opacity="${op}">${escXml(text)}</text>`);
     labelCount++;
   });
@@ -2692,8 +2694,8 @@ function downloadChart(exportFilename) {
   const activeRegions = Object.keys(REGION_COLORS).filter(r => !S.hiddenRegions.has(r));
   activeRegions.forEach(r => {
     if (legX > EW - 120) return; // overflow guard
-    s.push(`<circle cx="${legX}" cy="${legY-3.5}" r="5" fill="${REGION_COLORS[r]}"/>`);
-    s.push(`<text x="${legX+9}" y="${legY}" font-family="sans-serif" font-size="10.5" fill="#555550">${escXml(REGION_SHORT[r])}</text>`);
+    s.push(`<circle cx="${legX}" cy="${legY-3.5}" r="7" fill="${REGION_COLORS[r]}"/>`);
+    s.push(`<text x="${legX+9}" y="${legY}" font-family="sans-serif" font-size="12" fill="#444">${escXml(REGION_SHORT[r])}</text>`);
     legX += REGION_SHORT[r].length * 6.5 + 24;
   });
 
@@ -2716,8 +2718,31 @@ function downloadChart(exportFilename) {
 
   // Footer: Note + Source + URL
   s.push(`<text x="${padX}" y="${EH-36}" font-family="sans-serif" font-size="10" fill="#888882">Note: Vertical lines = Gini thresholds (${escXml(String(TL))} and ${escXml(String(TH))}). Horizontal lines: no change and &#177;2pt Stalled band. Gini 0 = perfect equality, 100 = maximum inequality.</text>`);
-  s.push(`<text x="${padX}" y="${EH-20}" font-family="sans-serif" font-size="9.5" fill="#ABAAA2">Source: UNU-WIDER, World Income Inequality Database (WIID) 2023</text>`);
-  s.push(`<text x="${EW-padR}" y="${EH-20}" font-family="sans-serif" font-size="9.5" fill="#ABAAA2" text-anchor="end">wiid.world</text>`);
+    // Matrix colour legend
+  {
+    const mlY = S.sizeBy !== 'none' ? legY + 76 : legY + 44;
+    const mlX = padX;
+    const DOT_C = {
+      'low-dec':'#74c69d','low-sta':'#b0bec5','low-ris':'#f4a261',
+      'med-dec':'#2d9e6b','med-sta':'#78909c','med-ris':'#e05d2a',
+      'high-dec':'#1a5c38','high-sta':'#37474f','high-ris':'#9b2226'
+    };
+    const tLbls = ['\u25BC Declining','\u2248 Stalled','\u25B2 Rising'];
+    const lLbls = ['High (\u226550)','Moderate (40\u201350)','Low (<40)'];
+    const cw=15, ch=13, gap=4;
+    s.push(`<text x="${mlX}" y="${mlY}" font-family="sans-serif" font-size="11.5" font-weight="600" fill="#333">Gini level \u2193    Trend \u2192</text>`);
+    tLbls.forEach((t,ti) => s.push(`<text x="${mlX+145+ti*105}" y="${mlY}" font-family="sans-serif" font-size="11" fill="#555">${t}</text>`));
+    ['high','med','low'].forEach((lv,li) => {
+      const ry = mlY + 15 + li*(ch+gap);
+      s.push(`<text x="${mlX+135}" y="${ry+ch-2}" font-family="sans-serif" font-size="10.5" fill="#666" text-anchor="end">${lLbls[li]}</text>`);
+      ['dec','sta','ris'].forEach((tr,ti) => {
+        const rx = mlX + 145 + ti*105 - 2;
+        s.push(`<rect x="${rx}" y="${ry}" width="${cw}" height="${ch}" rx="2" fill="${DOT_C[lv+'-'+tr]}" opacity="0.9"/>`);
+      });
+    });
+  }
+  s.push(`<text x="${padX}" y="${EH-20}" font-family="sans-serif" font-size="11.5" fill="#777772">Source: WIID Companion · UNU-WIDER (2024)</text>`);
+  s.push(`<text x="${EW-padR}" y="${EH-20}" font-family="sans-serif" font-size="11.5" fill="#777772" text-anchor="end">Source: WIID Companion · UNU-WIDER (2024) · wiid.world</text>`);
 
   s.push('</svg>');
   const svgStr = s.join('\n');
