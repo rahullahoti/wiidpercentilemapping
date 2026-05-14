@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -37,6 +37,20 @@
   --q-yellow: #FFF6E0;
   --q-red: #FCEAE8;
   --q-blue: #E8F0F8;
+
+  /* 3x3 cell colours */
+  /* Declining = green family (light → dark as level rises) */
+  --cell-low-dec:    #74c69d;
+  --cell-med-dec:    #2d9e6b;
+  --cell-high-dec:   #1a5c38;
+  /* Stalled = blue-grey family (light → dark) */
+  --cell-low-sta:    #b0bec5;
+  --cell-med-sta:    #78909c;
+  --cell-high-sta:   #37474f;
+  /* Rising = orange → crimson family */
+  --cell-low-ris:    #f4a261;
+  --cell-med-ris:    #e05d2a;
+  --cell-high-ris:   #9b2226;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -593,10 +607,10 @@ body {
 .zoom-btn:hover { background: var(--border-light); color: var(--text); }
 .zoom-btn.hidden { display: none; }
 .zoom-sep { width: 1px; height: 20px; background: var(--border-light); margin: 0 2px; }
-.download-btn { background: var(--accent); color: #fff !important; border-color: var(--accent); font-weight: 600; letter-spacing: 0.01em; }
-.download-btn:hover:not(:disabled) { background: #9A2F16 !important; color: #fff !important; }
-.download-btn:disabled { background: #AAA !important; border-color: #AAA !important; cursor: wait; opacity: 0.8; }
-.download-btn.done { background: #2D7A50 !important; border-color: #2D7A50 !important; }
+.download-btn { background: #f0f0ee; color: var(--text); border: 1px solid #ccc; font-weight: 500; letter-spacing: 0.01em; }
+.download-btn:hover:not(:disabled) { background: #e6e6e3; color: var(--text); }
+.download-btn:disabled { background: #AAA !important; color: #fff !important; border-color: #AAA !important; cursor: wait; opacity: 0.8; }
+.download-btn.done { background: #2D7A50 !important; color: #fff !important; border-color: #2D7A50 !important; }
 .dl-wrap { position: relative; }
 .dl-pop { position: absolute; top: calc(100% + 6px); right: 0; background: var(--bg); border: 1px solid var(--border-light); border-radius: 8px; padding: 10px 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 280px; }
 .dl-pop.hidden { display: none; }
@@ -732,7 +746,7 @@ body {
 /* Quadrant cards */
 .quad-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-bottom: 36px;
 }
@@ -1053,6 +1067,124 @@ body {
   margin: 8px 0;
 }
 
+/* === HERO STRIP (above chart) === */
+.hero-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px 0 4px;
+  border-top: 2px solid var(--border-light);
+}
+.hero-strip .hero-card {
+  padding: 14px 18px;
+  background: #f7f7f5;
+  border: 1px solid #ddd;
+  border-left: 4px solid #aaa;
+  border-radius: 5px;
+}
+.hero-strip .hero-card.accent {
+  background: #fff5f5;
+  border-color: #e8c0bc;
+  border-left-color: #8b0000;
+}
+.hero-strip .hero-card .hero-num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; margin-bottom: 3px; color: var(--text); }
+.hero-strip .hero-card.accent .hero-num { color: #8b0000; }
+.hero-strip .hero-card .hero-label { font-size: 0.82rem; font-weight: 600; color: var(--text-mid); margin-bottom: 2px; }
+.hero-strip .hero-card .hero-sub { font-size: 0.73rem; color: var(--text-light); line-height: 1.4; }
+
+/* === LEGEND STRIP (above chart) === */
+.legend-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 6px 0 8px;
+  font-size: 0.78rem;
+  color: var(--text-mid);
+  align-items: center;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+.leg-item:hover { color: var(--text); }
+.leg-item.dimmed { opacity: 0.35; }
+.leg-strip-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  margin-right: 2px;
+}
+
+/* === HELP BUTTON === */
+.help-btn {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  z-index: 12;
+}
+.help-btn:hover { border-color: var(--accent); color: var(--accent); }
+.help-pop {
+  position: absolute;
+  top: 40px;
+  left: 18px;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--text-mid);
+  max-width: 320px;
+}
+.help-pop.hidden { display: none; }
+.help-pop .help-title { font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 0.85rem; }
+.help-pop ul { list-style: none; padding: 0; margin: 0; }
+.help-pop li { padding: 2px 0; }
+
+/* === QUAD HIGH HEADING === */
+.quad-high-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin: 4px 0 10px;
+}
+
+/* Secondary download button override */
+.download-btn.secondary {
+  background: #f0f0ee !important;
+  color: var(--text) !important;
+  border: 1px solid #ccc !important;
+  font-weight: 500 !important;
+}
+.download-btn.secondary:hover:not(:disabled) {
+  background: #e6e6e3 !important;
+  color: var(--text) !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .page { padding: 16px 8px 40px; }
@@ -1077,14 +1209,6 @@ body {
   <!-- CONTROLS -->
   <div class="controls" id="controls">
     <div class="ctrl">
-      <label>Region</label>
-      <select id="regionFilter"><option value="all">All Regions</option></select>
-    </div>
-    <div class="ctrl">
-      <label>Income Group</label>
-      <select id="incomeFilter"><option value="all">All Income Groups</option></select>
-    </div>
-    <div class="ctrl">
       <label>Base Year</label>
       <select id="baseYearSelect">
         <option value="1990">1990</option>
@@ -1108,23 +1232,12 @@ body {
       <div class="opts-pop hidden" id="optionsPop">
         <div class="opts-row">
           <div class="ctrl">
-            <label>X-Axis</label>
-            <select id="xAxisSelect">
-              <option value="base">Base Year</option>
-              <option value="final">Final Year</option>
-            </select>
+            <label>Region</label>
+            <select id="regionFilter"><option value="all">All Regions</option></select>
           </div>
           <div class="ctrl">
-            <label>Threshold</label>
-            <input type="number" id="thresholdInput" value="40" min="20" max="80" step="1">
-          </div>
-          <div class="ctrl">
-            <label>Bubble Size</label>
-            <select id="sizeBySelect">
-              <option value="none">Uniform</option>
-              <option value="population" selected>Population</option>
-              <option value="gdp">GDP per capita</option>
-            </select>
+            <label>Income Group</label>
+            <select id="incomeFilter"><option value="all">All Income Groups</option></select>
           </div>
           <div class="ctrl">
             <label>View</label>
@@ -1136,6 +1249,29 @@ body {
             </select>
           </div>
           <div class="ctrl">
+            <label>X-Axis</label>
+            <select id="xAxisSelect">
+              <option value="base">Base Year</option>
+              <option value="final">Final Year</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <label>Low threshold</label>
+            <input type="number" id="thresholdLow" value="40" min="20" max="79" step="1">
+          </div>
+          <div class="ctrl">
+            <label>High threshold</label>
+            <input type="number" id="thresholdHigh" value="50" min="21" max="80" step="1">
+          </div>
+          <div class="ctrl">
+            <label>Bubble Size</label>
+            <select id="sizeBySelect">
+              <option value="none">Uniform</option>
+              <option value="population" selected>Population</option>
+              <option value="gdp">GDP per capita</option>
+            </select>
+          </div>
+          <div class="ctrl">
             <div class="toggle-wrap" style="padding-top:18px">
               <label class="tsw"><input type="checkbox" id="labelToggle" checked><span></span></label>
               <label class="tl" for="labelToggle">Labels</label>
@@ -1144,7 +1280,7 @@ body {
         </div>
       </div>
     </div>
-    <div class="ctrl search-ctrl">
+    <div class="ctrl search-ctrl" style="flex:1;max-width:none">
       <label>Select Countries</label>
       <input
         type="text"
@@ -1174,11 +1310,27 @@ body {
   <!-- COUNT -->
   <div class="count-bar" id="countBar"></div>
 
+  <!-- HERO STRIP (above chart) -->
+  <div id="heroStrip" class="hero-strip"></div>
+
+  <!-- LEGEND STRIP (above chart) -->
+  <div id="legendStrip" class="legend-strip"></div>
+
   <div class="fs-overlay" id="fsOverlay"></div>
 
   <!-- CHART -->
   <div class="chart-wrap" id="chartWrap">
-    <div class="legend-row" id="legendRow"></div>
+    <div class="legend-row" id="legendRow" style="display:none"></div>
+    <button class="help-btn" id="helpBtn" type="button" title="How to read this chart" aria-label="How to read this chart">?</button>
+    <div class="help-pop hidden" id="helpPop">
+      <div class="help-title">How to read this chart</div>
+      <ul>
+        <li>• Left = more equal (lower Gini) · Right = less equal</li>
+        <li>• Down = improving (Gini fell) · Up = worsening (Gini rose)</li>
+        <li>• A country in the bottom-left has low inequality and it's falling</li>
+        <li>• Bubble size = population</li>
+      </ul>
+    </div>
     <div class="zoom-controls">
       <button class="zoom-btn" id="zoomInBtn" title="Zoom in">+</button>
       <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">−</button>
@@ -1200,9 +1352,6 @@ body {
     <div class="zoom-hint" id="zoomHint">Scroll to zoom · Drag to pan</div>
   </div>
 
-  <!-- HERO STAT -->
-  <div class="hero-stats" id="heroStats"></div>
-
   <!-- BELOW-CHART ANALYSIS -->
   <div class="analysis-section" id="analysisSection">
     <!-- Key takeaways (hierarchical: shock stat + supporting) -->
@@ -1210,6 +1359,10 @@ body {
       <h3>Key findings</h3>
       <div class="tk-list" id="tkList"></div>
     </div>
+
+    <!-- Always-visible High-tier quadrant cards -->
+    <div class="quad-high-heading">High inequality countries</div>
+    <div class="quad-cards" id="quadCardsHigh"></div>
 
     <!-- Country spotlight: large population countries -->
     <div class="spotlight-section">
@@ -1224,9 +1377,9 @@ body {
       <div class="movers-grid" id="moversGrid"></div>
     </div>
 
-    <button class="detail-toggle" id="detailToggle" type="button">Show detailed breakdown ▾</button>
+    <button class="detail-toggle" id="detailToggle" type="button">Show all 9 cells ▾</button>
     <div class="detail-section hidden" id="detailSection">
-    <!-- Quadrant cards -->
+    <!-- Remaining 6 quadrant cards (Medium and Low tiers) -->
     <div class="quad-cards" id="quadCards"></div>
 
     <!-- Regional summary (sorted by severity) -->
@@ -1243,7 +1396,7 @@ body {
   <!-- SOURCE -->
   <div class="source-block">
     <p><strong>Source:</strong> UNU-WIDER, World Income Inequality Database (WIID) Companion dataset (wiidcountry and/or wiidglobal). Version 28 April 2025. <a href="https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425" style="color:var(--text-mid)">https://doi.org/10.35188/UNU-WIDER/WIIDcomp-280425</a></p>
-    <p><strong>Methodology:</strong> Change is calculated as Gini(2022) − Gini(1990). The quadrant threshold is set at 40 by default but is configurable above. Gini values range from 0 (perfect equality) to 100 (maximum inequality).</p>
+    <p><strong>Methodology:</strong> Change is calculated as Gini(2022) − Gini(base year). Countries are classified by level using two thresholds (default: 40 and 50) and by trend using a ±2 point band — changes within ±2 points are treated as Stalled to avoid treating survey noise as a genuine trend. Thresholds are configurable above. Gini values range from 0 (perfect equality) to 100 (maximum inequality).</p>
   </div>
 </div>
 
@@ -1284,16 +1437,25 @@ const REGION_SHORT = {
   'South Asia':                      'South Asia',
   'Sub-Saharan Africa':              'Sub-Saharan Africa'
 };
+const TREND_DEC = -2;
+const TREND_RIS = 2;
+
 const QUADRANT_DEFS = [
-  { id:'low-decline',  label:'Lower & Declining',  sub:'More equal, improving',    color:'#2D7A50', bg:'var(--q-green)', xSide:'low',  ySide:'low'  },
-  { id:'low-increase', label:'Lower & Rising',     sub:'More equal, but worsening', color:'#C47F17', bg:'var(--q-yellow)', xSide:'low',  ySide:'high' },
-  { id:'high-decline', label:'Higher & Declining',  sub:'Less equal, but improving', color:'#336B99', bg:'var(--q-blue)',  xSide:'high', ySide:'low'  },
-  { id:'high-increase',label:'Higher & Rising',     sub:'Less equal, worsening',     color:'#C44536', bg:'var(--q-red)',   xSide:'high', ySide:'high' }
+  { id:'low-dec',  level:'low',  trend:'dec', label:'Lower & Declining',          sub:'More equal, improving',            color:'var(--cell-low-dec)',  bg:'#e8f5ee' },
+  { id:'low-sta',  level:'low',  trend:'sta', label:'Lower & Stalled',             sub:'More equal, but not improving',    color:'var(--cell-low-sta)',  bg:'#f3f4f5' },
+  { id:'low-ris',  level:'low',  trend:'ris', label:'Lower & Rising',              sub:'More equal, but worsening',        color:'var(--cell-low-ris)',  bg:'#fff4ec' },
+  { id:'med-dec',  level:'med',  trend:'dec', label:'Moderate & Declining',        sub:'Moderate inequality, improving',   color:'var(--cell-med-dec)',  bg:'#ddf0e6' },
+  { id:'med-sta',  level:'med',  trend:'sta', label:'Moderate & Stalled',          sub:'Moderate inequality, no progress', color:'var(--cell-med-sta)',  bg:'#eceeef' },
+  { id:'med-ris',  level:'med',  trend:'ris', label:'Moderate & Rising',           sub:'Moderate inequality, worsening',   color:'var(--cell-med-ris)',  bg:'#fde5d8' },
+  { id:'high-dec', level:'high', trend:'dec', label:'Higher & Declining',          sub:'Less equal, but improving',        color:'var(--cell-high-dec)', bg:'#ccead8' },
+  { id:'high-sta', level:'high', trend:'sta', label:'Higher & Stalled',            sub:'Less equal, no progress',          color:'var(--cell-high-sta)', bg:'#e0e3e5' },
+  { id:'high-ris', level:'high', trend:'ris', label:'Higher & Rising',             sub:'Less equal, worsening',            color:'var(--cell-high-ris)', bg:'#fce4e4' },
 ];
 
 // ===== STATE =====
 let S = {
-  threshold: 40,
+  thresholdLow: 40,
+  thresholdHigh: 50,
   regionFilter: 'all',
   incomeFilter: 'all',
   selectedCountries: new Set(),  // Changed from search: ''
@@ -1308,7 +1470,7 @@ let S = {
 };
 
 // ===== URL STATE =====
-const DEFAULTS = { threshold:40, regionFilter:'all', incomeFilter:'all', selectedCountries:new Set(), sizeBy:'population', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
+const DEFAULTS = { thresholdLow:40, thresholdHigh:50, regionFilter:'all', incomeFilter:'all', selectedCountries:new Set(), sizeBy:'population', baseYear:'1990', finalYear:'2022', xAxis:'base', showLabels:true };
 const VALID_SIZES = new Set(['none','population','gdp']);
 const VALID_YEARS = new Set(['1990','2000','2010','2019','2022']);
 const YEAR_ORDER = ['1990','2000','2010','2019','2022'];
@@ -1316,7 +1478,8 @@ let TOTAL_COUNT; // cached on first run
 
 function stateToURL() {
   const p = new URLSearchParams();
-  if (S.threshold !== DEFAULTS.threshold) p.set('t', S.threshold);
+  if (S.thresholdLow !== DEFAULTS.thresholdLow) p.set('tl', S.thresholdLow);
+  if (S.thresholdHigh !== DEFAULTS.thresholdHigh) p.set('th', S.thresholdHigh);
   if (S.regionFilter !== DEFAULTS.regionFilter) p.set('r', S.regionFilter);
   if (S.incomeFilter !== DEFAULTS.incomeFilter) p.set('i', S.incomeFilter);
   if (S.selectedCountries.size > 0) p.set('sc', [...S.selectedCountries].sort().join(','));
@@ -1338,7 +1501,8 @@ function stateFromURL() {
   const validRegions = new Set(COUNTRIES.map(d => d.region_wb));
   const validIncomes = new Set(COUNTRIES.map(d => d.incomegroup));
 
-  if (p.has('t')) { const v = parseFloat(p.get('t')); if (v >= 20 && v <= 80) S.threshold = v; }
+  if (p.has('tl')) { const v = parseFloat(p.get('tl')); if (v >= 20 && v <= 79) S.thresholdLow = v; }
+  if (p.has('th')) { const v = parseFloat(p.get('th')); if (v >= 21 && v <= 80) S.thresholdHigh = v; }
   if (p.has('r') && (p.get('r') === 'all' || validRegions.has(p.get('r')))) S.regionFilter = p.get('r');
   if (p.has('i') && (p.get('i') === 'all' || validIncomes.has(p.get('i')))) S.incomeFilter = p.get('i');
 
@@ -1383,7 +1547,8 @@ function stateFromURL() {
 }
 
 function syncUIFromState() {
-  document.getElementById('thresholdInput').value = S.threshold;
+  document.getElementById('thresholdLow').value = S.thresholdLow;
+  document.getElementById('thresholdHigh').value = S.thresholdHigh;
   document.getElementById('regionFilter').value = S.regionFilter;
   document.getElementById('incomeFilter').value = S.incomeFilter;
   // searchTerm is ephemeral, not synced from URL state
@@ -1399,8 +1564,7 @@ function syncUIFromState() {
   updateFinalYearOptions();
   updateBaseYearOptions();
   S.hiddenRegions.forEach(r => {
-    const el = document.querySelector(`.lr-item[data-region="${r}"]`);
-    if (el) el.classList.add('dimmed');
+    document.querySelectorAll(`.lr-item[data-region="${r}"], .leg-item[data-region="${r}"]`).forEach(el => el.classList.add('dimmed'));
   });
   // Initialize chips after state is loaded
   renderChips();
@@ -1637,18 +1801,30 @@ function populateDropdowns() {
 }
 
 function buildLegend() {
-  const c = document.getElementById('legendRow');
+  const c = document.getElementById('legendStrip');
+  if (!c) return;
   c.innerHTML = '';
 
+  const labelEl = document.createElement('span');
+  labelEl.className = 'leg-strip-label';
+  labelEl.textContent = S.viewMode === 'incomegroups' ? 'Income groups:' : 'Regions:';
+  c.appendChild(labelEl);
+
+  const makeSvgDot = (col, diamond) => {
+    if (diamond) {
+      return `<svg width="12" height="12" viewBox="0 0 12 12"><polygon points="6,1 11,6 6,11 1,6" fill="${col}"/></svg>`;
+    }
+    return `<svg width="12" height="12"><circle cx="6" cy="6" r="5" fill="${col}"/></svg>`;
+  };
+
   if (S.viewMode === 'incomegroups') {
-    // Income group legend (skip hyphenated duplicates and Missing)
     const shown = new Set();
     Object.entries(INCOME_COLORS).forEach(([inc, col]) => {
       if (inc === 'Missing' || shown.has(col)) return;
       shown.add(col);
-      const el = document.createElement('div');
-      el.className = 'lr-item';
-      el.innerHTML = `<span class="lr-dot" style="background:${col};transform:rotate(45deg);border-radius:2px"></span>${inc}`;
+      const el = document.createElement('span');
+      el.className = 'leg-item';
+      el.innerHTML = `${makeSvgDot(col, true)} ${inc}`;
       c.appendChild(el);
     });
     return;
@@ -1656,13 +1832,11 @@ function buildLegend() {
 
   // Region legend (default, regions-only, countries+agg)
   Object.entries(REGION_COLORS).forEach(([r, col]) => {
-    const el = document.createElement('div');
-    el.className = 'lr-item';
+    const el = document.createElement('span');
+    el.className = 'leg-item';
     el.dataset.region = r;
-    const dotStyle = S.viewMode === 'regions'
-      ? `background:${col};transform:rotate(45deg);border-radius:2px`
-      : `background:${col}`;
-    el.innerHTML = `<span class="lr-dot" style="${dotStyle}"></span>${REGION_SHORT[r]}`;
+    const useDiamond = S.viewMode === 'regions';
+    el.innerHTML = `${makeSvgDot(col, useDiamond)} ${REGION_SHORT[r]}`;
     if (S.viewMode !== 'regions') {
       el.addEventListener('click', () => {
         if (S.hiddenRegions.has(r)) { S.hiddenRegions.delete(r); el.classList.remove('dimmed'); }
@@ -1676,9 +1850,9 @@ function buildLegend() {
 
   // In countries+agg mode, add a diamond key
   if (S.viewMode === 'countries+agg') {
-    const el = document.createElement('div');
-    el.className = 'lr-item';
-    el.innerHTML = `<span class="lr-dot" style="background:#555;transform:rotate(45deg);border-radius:2px"></span>Aggregate`;
+    const el = document.createElement('span');
+    el.className = 'leg-item';
+    el.innerHTML = `${makeSvgDot('#555', true)} Aggregate`;
     c.appendChild(el);
   }
 }
@@ -1727,8 +1901,11 @@ function buildChart() {
   gQuad.append('line').attr('class', 'thr-x');
   gQuad.append('line').attr('class', 'thr-y');
 
-  // Quadrant labels inside clipped group
-  ['ql-ll','ql-lh','ql-hl','ql-hh'].forEach(c => gQuad.append('text').attr('class', `q-label ${c}`));
+  // Extra threshold lines for 3x3 grid
+  gQuad.append('line').attr('class', 'thr-x2');
+  gQuad.append('line').attr('class', 'thr-dec');
+  gQuad.append('line').attr('class', 'thr-ris');
+  // 9 quadrant labels removed — grid + colours sufficient
 
   // X-axis label
   g.append('text').attr('class', 'ax-label xl')
@@ -1766,7 +1943,6 @@ function resetZoom() {
 
 function update() {
   currentData = filtered();
-  const T = S.threshold;
 
   // Compute base domains
   const xe = d3.extent(currentData, d => xVal(d));
@@ -1811,7 +1987,8 @@ function update() {
 
 function render(animate) {
   const data = currentData;
-  const T = S.threshold;
+  const TL = S.thresholdLow;
+  const TH = S.thresholdHigh;
   const dur = animate ? 400 : 0;
 
   // Zoomed scales
@@ -1835,29 +2012,41 @@ function render(animate) {
   g.select('.xl').text(`← Lower inequality · Gini (${S.xAxis === 'base' ? S.baseYear : S.finalYear}) · Higher →`);
   g.select('.yl').text('Change in Gini');
 
-  // Quadrant fills
-  const tx = zx(T), ty = zy(0);
+  // 3x3 Quadrant fills
+  const txL = zx(TL), txH = zx(TH);
+  const ty  = zy(0), tyDec = zy(TREND_DEC), tyRis = zy(TREND_RIS);
   gQuad.selectAll('rect').remove();
-  const qa = 0.45;
+  const qa = 0.65;
   const clamp = v => Math.max(0, v);
-  gQuad.insert('rect',':first-child').attr('x',0).attr('y',clamp(ty)).attr('width',clamp(tx)).attr('height',clamp(H-ty)).attr('fill','#E6F2EC').attr('opacity',qa);
-  gQuad.insert('rect',':first-child').attr('x',0).attr('y',0).attr('width',clamp(tx)).attr('height',clamp(ty)).attr('fill','#FFF6E0').attr('opacity',qa);
-  gQuad.insert('rect',':first-child').attr('x',clamp(tx)).attr('y',clamp(ty)).attr('width',clamp(W-tx)).attr('height',clamp(H-ty)).attr('fill','#E8F0F8').attr('opacity',qa);
-  gQuad.insert('rect',':first-child').attr('x',clamp(tx)).attr('y',0).attr('width',clamp(W-tx)).attr('height',clamp(ty)).attr('fill','#FCEAE8').attr('opacity',qa);
+  const clampW = (x, x2) => Math.max(0, Math.min(x2, W) - Math.max(0, x));
+  const clampH = (y, y2) => Math.max(0, Math.min(y2, H) - Math.max(0, y));
+  // 9 cells: [level: low/med/high] x [trend: dec/sta/ris]
+  // x bands: 0->txL (low), txL->txH (med), txH->W (high)
+  // y bands: 0->tyRis (ris), tyRis->tyDec (sta), tyDec->H (dec)
+  const cells = [
+    { x:0,    y:0,     w:clamp(txL),      h:clamp(tyRis),       fill:'#fdf4e0' },  // low-ris
+    { x:0,    y:clamp(tyRis), w:clamp(txL), h:clampH(tyRis,tyDec), fill:'#eef5f1' }, // low-sta
+    { x:0,    y:clamp(tyDec), w:clamp(txL), h:clamp(H-tyDec),    fill:'#e8f5ee' },  // low-dec
+    { x:clamp(txL), y:0, w:clampW(txL,txH), h:clamp(tyRis),      fill:'#faeee8' },  // med-ris
+    { x:clamp(txL), y:clamp(tyRis), w:clampW(txL,txH), h:clampH(tyRis,tyDec), fill:'#f0f2f5' }, // med-sta
+    { x:clamp(txL), y:clamp(tyDec), w:clampW(txL,txH), h:clamp(H-tyDec), fill:'#e8f0f8' }, // med-dec
+    { x:clamp(txH), y:0, w:clamp(W-txH),   h:clamp(tyRis),       fill:'#fce8e8' },  // high-ris
+    { x:clamp(txH), y:clamp(tyRis), w:clamp(W-txH), h:clampH(tyRis,tyDec), fill:'#fdf3e0' }, // high-sta
+    { x:clamp(txH), y:clamp(tyDec), w:clamp(W-txH), h:clamp(H-tyDec), fill:'#e8f2fc' }, // high-dec
+  ];
+  cells.forEach(c => {
+    if (c.w > 0 && c.h > 0) gQuad.insert('rect',':first-child').attr('x',c.x).attr('y',c.y).attr('width',c.w).attr('height',c.h).attr('fill',c.fill).attr('opacity',qa);
+  });
 
-  // Threshold lines
-  gQuad.select('.thr-x').attr('x1',tx).attr('x2',tx).attr('y1',0).attr('y2',H)
-    .attr('stroke','#999').attr('stroke-dasharray','6,4').attr('stroke-width',1.2);
-  gQuad.select('.thr-y').attr('x1',0).attr('x2',W).attr('y1',ty).attr('y2',ty)
-    .attr('stroke','#999').attr('stroke-dasharray','6,4').attr('stroke-width',1.2);
+  // Threshold lines (2 vertical + 2 horizontal = 3x3 grid)
+  const thrStyle = sel => sel.attr('stroke','#999').attr('stroke-dasharray','6,4').attr('stroke-width',1.2);
+  thrStyle(gQuad.select('.thr-x').attr('x1',txL).attr('x2',txL).attr('y1',0).attr('y2',H));
+  thrStyle(gQuad.select('.thr-x2').attr('x1',txH).attr('x2',txH).attr('y1',0).attr('y2',H));
+  thrStyle(gQuad.select('.thr-y').attr('x1',0).attr('x2',W).attr('y1',ty).attr('y2',ty));
+  thrStyle(gQuad.select('.thr-dec').attr('x1',0).attr('x2',W).attr('y1',tyDec).attr('y2',tyDec));
+  thrStyle(gQuad.select('.thr-ris').attr('x1',0).attr('x2',W).attr('y1',tyRis).attr('y2',tyRis));
 
-  // Quadrant labels — anchored to quadrant corners
-  const p = 8;
-  const qlX1 = Math.max(p, tx - 160), qlX2 = Math.min(W - p, tx + 160);
-  gQuad.select('.ql-ll').attr('x',p).attr('y',H-p).text('IMPROVING').attr('fill','#2D7A50').attr('opacity',0.55);
-  gQuad.select('.ql-lh').attr('x',p).attr('y',p+14).text('LOW · RISING').attr('fill','#C47F17').attr('opacity',0.55);
-  gQuad.select('.ql-hl').attr('x',W-p).attr('y',H-p).attr('text-anchor','end').text('HIGH · IMPROVING').attr('fill','#336B99').attr('opacity',0.55);
-  gQuad.select('.ql-hh').attr('x',W-p).attr('y', Math.max(ty - 10, p + 14)).attr('text-anchor','end').text('WORSENING').attr('fill','#C44536').attr('opacity',0.55);
+  // 9 cell labels removed — grid lines + background colors convey structure
 
   // === Dimming logic ===
   const hasRegionFilter = S.regionFilter !== 'all';
@@ -2001,21 +2190,13 @@ function renderLabels(data, zx, zy) {
 
 
 // ===== TOOLTIP =====
-const QUAD_POLICY = {
-  'low-decline': { label: 'Lower & Declining', color: '#2D7A50', note: 'Success story — inequality is low and falling' },
-  'low-rise': { label: 'Lower & Rising', color: '#C47F17', note: 'Warning — gains may be reversing' },
-  'high-decline': { label: 'Higher & Declining', color: '#336B99', note: 'Progress — but still far from equitable' },
-  'high-rise': { label: 'Higher & Rising', color: '#C44536', note: 'Urgent — inequality is compounding' }
-};
 
 function getQuadrant(d) {
-  const T = S.threshold;
-  const high = xVal(d) >= T;
-  const rising = giniChange(d) > 0;
-  if (!high && !rising) return QUAD_POLICY['low-decline'];
-  if (!high && rising) return QUAD_POLICY['low-rise'];
-  if (high && !rising) return QUAD_POLICY['high-decline'];
-  return QUAD_POLICY['high-rise'];
+  const v = xVal(d);
+  const c = giniChange(d);
+  const level = v < S.thresholdLow ? 'low' : v < S.thresholdHigh ? 'med' : 'high';
+  const trend = c <= TREND_DEC ? 'dec' : c >= TREND_RIS ? 'ris' : 'sta';
+  return QUADRANT_DEFS.find(q => q.level === level && q.trend === trend);
 }
 
 const tipEl = document.getElementById('tip');
@@ -2027,6 +2208,7 @@ function showTip(ev, d) {
   tipEl.innerHTML = `
     ${kicker}
     <div class="tip-name">${d.country}</div>
+    <div class="tip-r"><span class="tip-l">Category</span><span class="tip-v" style="color:${q ? q.color : '#888'};font-size:0.72rem;font-weight:600">${q ? q.label : ''}</span></div>
     <div class="tip-r"><span class="tip-l">Change</span><span class="tip-v" style="color:${cc};font-weight:600">${dir} ${Math.abs(giniChange(d)).toFixed(1)} pts</span></div>
     <div class="tip-r"><span class="tip-l">Gini ${S.finalYear}</span><span class="tip-v">${giniFinal(d).toFixed(1)}</span></div>
     <div class="tip-r"><span class="tip-l">Gini ${S.baseYear}</span><span class="tip-v">${giniBase(d) != null ? giniBase(d).toFixed(1) : '—'}</span></div>`;
@@ -2047,7 +2229,7 @@ function updateTags() {
   const tags = [];
   if (S.regionFilter!=='all') tags.push({l:REGION_SHORT[S.regionFilter], cl:()=>{S.regionFilter='all';document.getElementById('regionFilter').value='all';}});
   if (S.incomeFilter!=='all') tags.push({l:S.incomeFilter, cl:()=>{S.incomeFilter='all';document.getElementById('incomeFilter').value='all';}});
-  S.hiddenRegions.forEach(r => tags.push({l:`Hidden: ${REGION_SHORT[r]}`, cl:()=>{S.hiddenRegions.delete(r);document.querySelector(`.lr-item[data-region="${r}"]`).classList.remove('dimmed');}}));
+  S.hiddenRegions.forEach(r => tags.push({l:`Hidden: ${REGION_SHORT[r]}`, cl:()=>{S.hiddenRegions.delete(r);document.querySelectorAll(`.lr-item[data-region="${r}"], .leg-item[data-region="${r}"]`).forEach(el => el.classList.remove('dimmed'));}}));
   if (!tags.length) return;
   const lbl = document.createElement('span'); lbl.className='ftl'; lbl.textContent='Filters:'; c.appendChild(lbl);
   tags.forEach(t => {
@@ -2062,7 +2244,7 @@ function updateTags() {
       S.regionFilter='all'; S.incomeFilter='all'; S.hiddenRegions.clear();
       document.getElementById('regionFilter').value='all';
       document.getElementById('incomeFilter').value='all';
-      document.querySelectorAll('.lr-item').forEach(e=>e.classList.remove('dimmed'));
+      document.querySelectorAll('.lr-item, .leg-item').forEach(e=>e.classList.remove('dimmed'));
       update(); stateToURL();
     });
     c.appendChild(b);
@@ -2072,7 +2254,7 @@ function updateTags() {
 // ===== HERO STATS =====
 function buildHeroStats() {
   const data = COUNTRIES.filter(d => giniBase(d) != null && giniFinal(d) != null);
-  const T = S.threshold;
+  const T = S.thresholdHigh;
 
   // Update headline and dek with current years
   document.getElementById('mainHeadline').innerHTML = `Most countries reduced inequality since ${S.baseYear}`;
@@ -2080,11 +2262,11 @@ function buildHeroStats() {
 
   const highRising = data.filter(d => xVal(d) >= T && giniChange(d) > 0);
   const hrPop = highRising.reduce((s,d) => s + d.population, 0);
-  const declined = data.filter(d => giniChange(d) < 0);
+  const declined = data.filter(d => giniChange(d) <= TREND_DEC);
   const totalPop = data.reduce((s,d) => s + d.population, 0);
   const avgGiniChange = data.reduce((s,d) => s + giniChange(d), 0) / data.length;
 
-  document.getElementById('heroStats').innerHTML = `
+  const heroHTML = `
     <div class="hero-card accent">
       <div class="hero-num">${fmtPop(hrPop)}</div>
       <div class="hero-label">people in "High & Rising" countries</div>
@@ -2101,6 +2283,10 @@ function buildHeroStats() {
       <div class="hero-sub">A ${avgGiniChange < 0 ? 'net improvement' : 'net worsening'} — but enormous variation across countries</div>
     </div>
   `;
+  const stripEl = document.getElementById('heroStrip');
+  if (stripEl) stripEl.innerHTML = heroHTML;
+  const legacyEl = document.getElementById('heroStats');
+  if (legacyEl) legacyEl.innerHTML = '';
 }
 
 // ===== BELOW-CHART ANALYSIS =====
@@ -2110,15 +2296,18 @@ function buildAnalysis() {
   const data = (vm === 'regions' || vm === 'incomegroups')
     ? COUNTRIES.filter(d => giniBase(d) != null && giniFinal(d) != null)
     : filtered().filter(d => d.area === 'Country');
-  const T = S.threshold;
+  const TL = S.thresholdLow;
+  const TH = S.thresholdHigh;
   const allRegions = Object.keys(REGION_COLORS);
 
   // === Quadrant cards ===
   const quads = QUADRANT_DEFS.map(q => {
     const countries = data.filter(d => {
-      const xm = q.xSide==='low' ? xVal(d)<T : xVal(d)>=T;
-      const ym = q.ySide==='low' ? giniChange(d)<0 : giniChange(d)>=0;
-      return xm && ym;
+      const v = xVal(d);
+      const c = giniChange(d);
+      const level = v < TL ? 'low' : v < TH ? 'med' : 'high';
+      const trend = c <= TREND_DEC ? 'dec' : c >= TREND_RIS ? 'ris' : 'sta';
+      return q.level === level && q.trend === trend;
     });
     const pop = countries.reduce((s,d)=>s+d.population, 0);
     const rb = allRegions.map(r => {
@@ -2129,7 +2318,7 @@ function buildAnalysis() {
   });
   const totalPop = quads.reduce((s,q)=>s+q.pop, 0);
 
-  document.getElementById('quadCards').innerHTML = quads.map(q => `
+  const renderQuadCard = q => `
     <div class="q-card" style="background:${q.bg};border-color:${q.color};">
       <h3 style="color:${q.color}">${q.label}</h3>
       <div class="q-sub">${q.sub}</div>
@@ -2151,24 +2340,29 @@ function buildAnalysis() {
         `).join('')}
       </div>
     </div>
-  `).join('');
+  `;
+  const highQuads = quads.filter(q => q.level === 'high');
+  const otherQuads = quads.filter(q => q.level !== 'high');
+  const quadCardsHighEl = document.getElementById('quadCardsHigh');
+  if (quadCardsHighEl) quadCardsHighEl.innerHTML = highQuads.map(renderQuadCard).join('');
+  document.getElementById('quadCards').innerHTML = otherQuads.map(renderQuadCard).join('');
 
   // === Key takeaways ===
-  const declined = data.filter(d => giniChange(d) < 0);
-  const rose = data.filter(d => giniChange(d) > 0);
-  const highAndRising = quads[3];
+  const declined = data.filter(d => giniChange(d) <= TREND_DEC);
+  const rose = data.filter(d => giniChange(d) >= TREND_RIS);
+  const highAndRising = quads[8]; // high-ris (index 8 in 9-cell system)
   const popDeclined = declined.reduce((s,d)=>s+d.population,0);
   const popTotal = data.reduce((s,d)=>s+d.population,0);
   const avgChange = data.reduce((s,d)=>s+giniChange(d),0) / data.length;
   const ssaData = data.filter(d=>d.region_wb==='Sub-Saharan Africa');
   const ssaAvgGini = ssaData.length ? (ssaData.reduce((s,d)=>s+giniFinal(d),0)/ssaData.length) : 0;
   const ecaData = data.filter(d=>d.region_wb==='Europe and Central Asia');
-  const ecaRose = ecaData.filter(d=>giniChange(d)>0);
+  const ecaRose = ecaData.filter(d=>giniChange(d)>=TREND_RIS);
 
   const findings = [
     { text: `<strong>${declined.length} of ${data.length} countries</strong> (${(declined.length/data.length*100).toFixed(0)}%) saw income inequality <strong>decline</strong> between ${S.baseYear} and ${S.finalYear} \u2014 representing <strong>${fmtPop(popDeclined)}</strong> people, or ${(popDeclined/popTotal*100).toFixed(0)}% of the population shown.` },
     { text: `The average change in Gini across all countries was <strong>${avgChange.toFixed(1)} points</strong> \u2014 a ${avgChange<0?'net improvement':'net worsening'} globally. But averages mask huge variation: changes ranged from ${data.reduce((m,d)=>Math.min(m,giniChange(d)),0).toFixed(1)} to +${data.reduce((m,d)=>Math.max(m,giniChange(d)),0).toFixed(1)} points.` },
-    { text: `<strong>Sub-Saharan Africa</strong> has the highest average Gini (${ssaAvgGini.toFixed(1)} in ${S.finalYear}) and dominates the \u201CHigher\u201D quadrants \u2014 ${ssaData.filter(d=>xVal(d)>=T).length} of its ${ssaData.length} countries have a Gini above ${T}.` },
+    { text: `<strong>Sub-Saharan Africa</strong> has the highest average Gini (${ssaAvgGini.toFixed(1)} in ${S.finalYear}) and dominates the \u201CHigher\u201D quadrants \u2014 ${ssaData.filter(d=>xVal(d)>=TH).length} of its ${ssaData.length} countries have a Gini above ${TH}.` },
     { text: `<strong>Europe & Central Asia</strong> tells a more complex story: while it has the lowest average inequality, <strong>${ecaRose.length} of ${ecaData.length}</strong> countries saw Gini <em>rise</em> \u2014 many former Soviet states transitioning to market economies.` },
     { text: `The <strong>\u201CHigher & Rising\u201D</strong> quadrant \u2014 the most concerning \u2014 contains <strong>${highAndRising.count} countries</strong> with ${(highAndRising.pop/totalPop*100).toFixed(0)}% of the shown population. These are places where already-high inequality is getting worse.` },
   ];
@@ -2217,7 +2411,7 @@ function buildAnalysis() {
     if (!rd.length) return null;
     const avgFinal = rd.reduce((s,d)=>s+giniFinal(d),0)/rd.length;
     const avgChg = rd.reduce((s,d)=>s+giniChange(d),0)/rd.length;
-    const pctDeclined = (rd.filter(d=>giniChange(d)<0).length / rd.length * 100);
+    const pctDeclined = (rd.filter(d=>giniChange(d)<=TREND_DEC).length / rd.length * 100);
     const pop = rd.reduce((s,d)=>s+d.population,0);
     return { region: r, n: rd.length, avgFinal, avgChg, pctDeclined, pop };
   }).filter(Boolean).sort((a,b) => b.avgFinal - a.avgFinal);
@@ -2232,7 +2426,7 @@ function buildAnalysis() {
   `).join('');
 
   // === Counterfactual ===
-  const hrCountries = quads[3].countries; // Higher & Rising
+  const hrCountries = quads[8].countries; // Higher & Rising (high-ris, index 8)
   const hrTotalPop = hrCountries.reduce((s,d)=>s+d.population, 0);
   const avgHRGini = hrCountries.length ? hrCountries.reduce((s,d)=>s+giniFinal(d),0)/hrCountries.length : 0;
   // What if they each reduced by 5 Gini points (approx Brazil's achievement)?
@@ -2306,7 +2500,8 @@ function downloadChart(exportFilename) {
 
   const DPR = 2;
   const EW = 1600, EH = 900;
-  const T = S.threshold;
+  const TL = S.thresholdLow;
+  const TH = S.thresholdHigh;
   const yearStr = yearLabel();
   const xLabel = S.xAxis === 'base' ? S.baseYear : S.finalYear;
   const hasSearch = S.selectedCountries.size > 0;
@@ -2371,35 +2566,43 @@ function downloadChart(exportFilename) {
   // Chart group
   s.push(`<g transform="translate(${padX},${chartT})">`);
 
-  // Quadrant fills — clamp tx/ty to chart bounds
-  const tx = Math.max(0, Math.min(chartW, exSc(T)));
-  const ty = Math.max(0, Math.min(chartH, eySc(0)));
+  // 3x3 Quadrant fills — clamp to chart bounds
+  const txL_e = Math.max(0, Math.min(chartW, exSc(TL)));
+  const txH_e = Math.max(0, Math.min(chartW, exSc(TH)));
+  const ty    = Math.max(0, Math.min(chartH, eySc(0)));
+  const tyDec_e = Math.max(0, Math.min(chartH, eySc(TREND_DEC)));
+  const tyRis_e = Math.max(0, Math.min(chartH, eySc(TREND_RIS)));
+  const clampW_e = (x, x2) => Math.max(0, Math.min(x2, chartW) - Math.max(0, x));
+  const clampH_e = (y, y2) => Math.max(0, Math.min(y2, chartH) - Math.max(0, y));
   [
-    { x:0, y:ty, w:tx, h:chartH-ty, fill:'#E6F2EC' },
-    { x:0, y:0, w:tx, h:ty, fill:'#FFF6E0' },
-    { x:tx, y:ty, w:chartW-tx, h:chartH-ty, fill:'#E8F0F8' },
-    { x:tx, y:0, w:chartW-tx, h:ty, fill:'#FCEAE8' }
+    { x:0,       y:0,        w:txL_e,           h:tyRis_e,                  fill:'#fdf4e0' },
+    { x:0,       y:tyRis_e,  w:txL_e,           h:clampH_e(tyRis_e,tyDec_e),fill:'#eef5f1' },
+    { x:0,       y:tyDec_e,  w:txL_e,           h:chartH-tyDec_e,           fill:'#e8f5ee' },
+    { x:txL_e,   y:0,        w:clampW_e(txL_e,txH_e), h:tyRis_e,            fill:'#faeee8' },
+    { x:txL_e,   y:tyRis_e,  w:clampW_e(txL_e,txH_e), h:clampH_e(tyRis_e,tyDec_e), fill:'#f0f2f5' },
+    { x:txL_e,   y:tyDec_e,  w:clampW_e(txL_e,txH_e), h:chartH-tyDec_e,    fill:'#e8f0f8' },
+    { x:txH_e,   y:0,        w:chartW-txH_e,    h:tyRis_e,                  fill:'#fce8e8' },
+    { x:txH_e,   y:tyRis_e,  w:chartW-txH_e,    h:clampH_e(tyRis_e,tyDec_e),fill:'#fdf3e0' },
+    { x:txH_e,   y:tyDec_e,  w:chartW-txH_e,    h:chartH-tyDec_e,           fill:'#e8f2fc' },
   ].forEach(q => {
-    if (q.w > 0 && q.h > 0) s.push(`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${q.fill}" opacity="0.5"/>`);
+    if (q.w > 0 && q.h > 0) s.push(`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${q.fill}" opacity="0.65"/>`);
   });
 
-  // Threshold lines
-  s.push(`<line x1="${tx}" x2="${tx}" y1="0" y2="${chartH}" stroke="#999" stroke-dasharray="6,4" stroke-width="1.2"/>`);
-  s.push(`<line x1="0" x2="${chartW}" y1="${ty}" y2="${ty}" stroke="#999" stroke-dasharray="6,4" stroke-width="1.2"/>`);
+  // Threshold lines (2 vertical + 2 horizontal)
+  const thrLine = (x1,y1,x2,y2) => s.push(`<line x1="${x1}" x2="${x2}" y1="${y1}" y2="${y2}" stroke="#999" stroke-dasharray="6,4" stroke-width="1.2"/>`);
+  thrLine(txL_e, 0, txL_e, chartH);
+  thrLine(txH_e, 0, txH_e, chartH);
+  thrLine(0, ty, chartW, ty);
+  thrLine(0, tyDec_e, chartW, tyDec_e);
+  thrLine(0, tyRis_e, chartW, tyRis_e);
   // Threshold line labels
-  if (tx > 40 && tx < chartW - 80) s.push(`<text x="${tx+4}" y="11" font-family="sans-serif" font-size="10.5" fill="#888882" text-anchor="start">Gini ${escXml(String(T))}</text>`);
-  if (ty > 20 && ty < chartH - 15) s.push(`<text x="${chartW-4}" y="${ty-4}" font-family="sans-serif" font-size="10.5" fill="#888882" text-anchor="end">No change</text>`);
+  if (txL_e > 20 && txL_e < chartW - 60) s.push(`<text x="${txL_e+3}" y="11" font-family="sans-serif" font-size="9.5" fill="#888882" text-anchor="start">Gini ${S.thresholdLow}</text>`);
+  if (txH_e > 20 && txH_e < chartW - 60) s.push(`<text x="${txH_e+3}" y="11" font-family="sans-serif" font-size="9.5" fill="#888882" text-anchor="start">Gini ${S.thresholdHigh}</text>`);
+  if (ty > 20 && ty < chartH - 15) s.push(`<text x="${chartW-4}" y="${ty-3}" font-family="sans-serif" font-size="9.5" fill="#888882" text-anchor="end">No change</text>`);
+  if (tyDec_e > 20 && tyDec_e < chartH - 15) s.push(`<text x="${chartW-4}" y="${tyDec_e-3}" font-family="sans-serif" font-size="9" fill="#aaa" text-anchor="end">−2 (Stalled band)</text>`);
+  if (tyRis_e > 20 && tyRis_e < chartH - 15) s.push(`<text x="${chartW-4}" y="${tyRis_e-3}" font-family="sans-serif" font-size="9" fill="#aaa" text-anchor="end">+2 (Stalled band)</text>`);
 
-  // Quadrant labels
-  const qlPad = 8, qlFs = 11;
-  [
-    { t:'Lower &amp; Declining', x:qlPad, y:chartH-qlPad, c:'#2D7A50', a:'start' },
-    { t:'Lower &amp; Rising', x:qlPad, y:qlPad+qlFs, c:'#C47F17', a:'start' },
-    { t:'Higher &amp; Declining', x:chartW-qlPad, y:chartH-qlPad, c:'#336B99', a:'end' },
-    { t:'Higher &amp; Rising', x:chartW-qlPad, y:qlPad+qlFs, c:'#C44536', a:'end' }
-  ].forEach(q => {
-    s.push(`<text x="${q.x}" y="${q.y}" font-family="sans-serif" font-size="${qlFs}" font-weight="600" fill="${q.c}" text-anchor="${q.a}" opacity="0.7">${q.t}</text>`);
-  });
+  // 9 cell labels removed — grid lines + background colours sufficient
 
   // Grid + tick labels
   exSc.ticks(8).forEach(v => {
@@ -2512,7 +2715,7 @@ function downloadChart(exportFilename) {
   }
 
   // Footer: Note + Source + URL
-  s.push(`<text x="${padX}" y="${EH-36}" font-family="sans-serif" font-size="10" fill="#888882">Note: Vertical dashed line = Gini ${escXml(String(T))} threshold. Horizontal line = no change. Gini 0 = perfect equality, 100 = maximum inequality.</text>`);
+  s.push(`<text x="${padX}" y="${EH-36}" font-family="sans-serif" font-size="10" fill="#888882">Note: Vertical lines = Gini thresholds (${escXml(String(TL))} and ${escXml(String(TH))}). Horizontal lines: no change and &#177;2pt Stalled band. Gini 0 = perfect equality, 100 = maximum inequality.</text>`);
   s.push(`<text x="${padX}" y="${EH-20}" font-family="sans-serif" font-size="9.5" fill="#ABAAA2">Source: UNU-WIDER, World Income Inequality Database (WIID) 2023</text>`);
   s.push(`<text x="${EW-padR}" y="${EH-20}" font-family="sans-serif" font-size="9.5" fill="#ABAAA2" text-anchor="end">wiid.world</text>`);
 
@@ -2651,7 +2854,14 @@ function bindEvents() {
     update(); stateToURL();
   });
   document.getElementById('xAxisSelect').addEventListener('change', e => { S.xAxis=e.target.value; update(); stateToURL(); });
-  document.getElementById('thresholdInput').addEventListener('change', e => { S.threshold=Math.min(80, Math.max(20, parseFloat(e.target.value)||40)); e.target.value=S.threshold; update(); stateToURL(); });
+  document.getElementById('thresholdLow').addEventListener('change', e => {
+    let v = Math.min(S.thresholdHigh - 1, Math.max(20, parseFloat(e.target.value)||40));
+    S.thresholdLow = v; e.target.value = v; update(); stateToURL();
+  });
+  document.getElementById('thresholdHigh').addEventListener('change', e => {
+    let v = Math.min(80, Math.max(S.thresholdLow + 1, parseFloat(e.target.value)||50));
+    S.thresholdHigh = v; e.target.value = v; update(); stateToURL();
+  });
   document.getElementById('sizeBySelect').addEventListener('change', e => { S.sizeBy=e.target.value; update(); stateToURL(); });
   document.getElementById('viewModeSelect').addEventListener('change', e => {
     S.viewMode = e.target.value;
@@ -2667,8 +2877,23 @@ function bindEvents() {
   document.getElementById('detailToggle').addEventListener('click', function() {
     const sec = document.getElementById('detailSection');
     const hidden = sec.classList.toggle('hidden');
-    this.textContent = hidden ? 'Show detailed breakdown ▾' : 'Hide detailed breakdown ▴';
+    this.textContent = hidden ? 'Show all 9 cells ▾' : 'Hide ▴';
   });
+
+  // Help popover toggle
+  const helpBtn = document.getElementById('helpBtn');
+  const helpPop = document.getElementById('helpPop');
+  if (helpBtn && helpPop) {
+    helpBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      helpPop.classList.toggle('hidden');
+    });
+    document.addEventListener('click', e => {
+      if (!helpPop.contains(e.target) && e.target !== helpBtn) {
+        helpPop.classList.add('hidden');
+      }
+    });
+  }
 
     // Options popover toggle
   const optsBtnEl = document.getElementById('optionsBtn');
