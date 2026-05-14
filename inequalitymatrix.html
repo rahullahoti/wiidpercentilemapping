@@ -2483,7 +2483,7 @@ function buildMovers() {
 // ===== CHART DOWNLOAD =====
 function downloadChart(exportFilename, format = 'png') {
   const fileName = (exportFilename || `inequality-${S.baseYear}-${S.finalYear}`)
-    .replace(/[<>:"/\\|?*]/g, '_') + '.png';
+    .replace(/[<>:"/\\|?*]/g, '_');
  
   const btn = document.getElementById('downloadBtn');
   if (btn.disabled) return;
@@ -2584,7 +2584,7 @@ function downloadChart(exportFilename, format = 'png') {
     { x:txL_e,   y:tyDec_e,  w:clampW_e(txL_e,txH_e), h:chartH-tyDec_e,    fill:QUADRANT_DEFS.find(q=>q.id==='med-dec').bg },
     { x:txH_e,   y:0,        w:chartW-txH_e,    h:tyRis_e,                  fill:QUADRANT_DEFS.find(q=>q.id==='high-ris').bg },
     { x:txH_e,   y:tyRis_e,  w:chartW-txH_e,    h:clampH_e(tyRis_e,tyDec_e),fill:QUADRANT_DEFS.find(q=>q.id==='high-sta').bg },
-    { x:txH_e,   y:tyDec_e,  w:chartW-txH_e,    h:chartH-tyDec_e,           fill:'#e8f2fc' },
+    { x:txH_e,   y:tyDec_e,  w:chartW-txH_e,    h:chartH-tyDec_e,           fill:QUADRANT_DEFS.find(q=>q.id==='high-dec').bg },
   ].forEach(q => {
     if (q.w > 0 && q.h > 0) s.push(`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="${q.fill}" opacity="0.65"/>`);
   });
@@ -2598,7 +2598,7 @@ function downloadChart(exportFilename, format = 'png') {
   thrLine(0, tyRis_e, chartW, tyRis_e);
   // Threshold line labels
   if (txL_e > 20 && txL_e < chartW - 60) s.push(`<text x="${txL_e+3}" y="11" font-family="sans-serif" font-size="21" fill="#888882" text-anchor="start">Gini ${S.thresholdLow}</text>`);
-  if (txH_e > 20 && txH_e < chartW - 60) s.push(`<text x="${txH_e+3}" y="11" font-family="sans-serif" font-size="9.5" fill="#888882" text-anchor="start">Gini ${S.thresholdHigh}</text>`);
+  if (txH_e > 20 && txH_e < chartW - 60) s.push(`<text x="${txH_e+3}" y="11" font-family="sans-serif" font-size="21" fill="#888882" text-anchor="start">Gini ${S.thresholdHigh}</text>`);
   if (ty > 20 && ty < chartH - 15) s.push(`<text x="${chartW-4}" y="${ty-3}" font-family="sans-serif" font-size="21" fill="#888882" text-anchor="end">No change</text>`);
   if (tyDec_e > 20 && tyDec_e < chartH - 15) s.push(`<text x="${chartW-4}" y="${tyDec_e-3}" font-family="sans-serif" font-size="20" fill="#aaa" text-anchor="end">−2 (Stalled band)</text>`);
   if (tyRis_e > 20 && tyRis_e < chartH - 15) s.push(`<text x="${chartW-4}" y="${tyRis_e-3}" font-family="sans-serif" font-size="20" fill="#aaa" text-anchor="end">+2 (Stalled band)</text>`);
@@ -2816,7 +2816,7 @@ function downloadChart(exportFilename, format = 'png') {
       try {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(pngBlob);
-        a.download = fileName;
+        a.download = fileName + '.png';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3121,7 +3121,11 @@ function bindEvents() {
     downloadChart(dlInput.value.trim() || `inequality-${S.baseYear}-${S.finalYear}`);
   });
   document.getElementById('downloadSVGBtn').addEventListener('click', () => {
+    const svgBtn = document.getElementById('downloadSVGBtn');
+    if (svgBtn.disabled) return;
+    svgBtn.disabled = true; svgBtn.textContent = '⏳';
     downloadChart(`inequality-${S.baseYear}-${S.finalYear}`, 'svg');
+    setTimeout(() => { svgBtn.disabled = false; svgBtn.textContent = '⬇ SVG'; }, 2500);
   });
   dlInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('dlConfirm').click(); }
