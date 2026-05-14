@@ -1338,7 +1338,7 @@ body {
       <button class="zoom-btn" id="expandBtn" title="Expand chart">⛶ Expand</button>
       <span class="zoom-sep"></span>
       <div class="dl-wrap">
-        <button class="zoom-btn download-btn" id="downloadBtn" title="Save chart as PNG (print-ready, 4800×3900 px)">⬇ PNG</button><button class="zoom-btn download-btn" id="downloadSVGBtn" title="Save chart as SVG (vector, scalable)" style="margin-left:4px">⬇ SVG</button>
+        <button class="zoom-btn download-btn" id="downloadBtn" title="Save chart as PNG (print-ready, 4800×3900 px)">⬇ Download</button>
         <div class="dl-pop hidden" id="dlPop">
           <label class="dl-pop-label">Filename</label>
           <div class="dl-pop-row">
@@ -2481,9 +2481,9 @@ function buildMovers() {
 
 
 // ===== CHART DOWNLOAD =====
-function downloadChart(exportFilename, format = 'png') {
+function downloadChart(exportFilename) {
   const fileName = (exportFilename || `inequality-${S.baseYear}-${S.finalYear}`)
-    .replace(/[<>:"/\\|?*]/g, '_');
+    .replace(/[<>:"/\\|?*]/g, '_') + '.png';
  
   const btn = document.getElementById('downloadBtn');
   if (btn.disabled) return;
@@ -2644,7 +2644,7 @@ function downloadChart(exportFilename, format = 'png') {
     return b.population - a.population;
   });
   const placed = [];
-  const maxLabels = Math.min(100, data.length);
+  const maxLabels = Math.min(45, data.length);
   let labelCount = 0;
   labelSorted.forEach(d => {
     if (labelCount >= maxLabels) return;
@@ -2660,13 +2660,13 @@ function downloadChart(exportFilename, format = 'png') {
 
     // Try right side, then left side
     let lx = cx + r + 3, ly = cy + 3.5;
-    let box = { x:lx-1, y:ly-lh, w:lw+2, h:lh+2 };
+    let box = { x:lx-4, y:ly-lh-5, w:lw+8, h:lh+10 };
     let ok = (lx + lw <= chartW + 10) && (lx >= -5);
 
     if (!ok || (!matched && placed.some(p => box.x < p.x+p.w && box.x+box.w > p.x && box.y < p.y+p.h && box.y+box.h > p.y))) {
       // Try left side
       lx = cx - r - lw - 3;
-      box = { x:lx-1, y:ly-lh, w:lw+2, h:lh+2 };
+      box = { x:lx-4, y:ly-lh-5, w:lw+8, h:lh+10 };
       ok = (lx >= -5) && (lx + lw <= chartW + 10);
     }
 
@@ -2748,19 +2748,6 @@ function downloadChart(exportFilename, format = 'png') {
   s.push('</svg>');
   const svgStr = s.join('\n');
 
-  // SVG direct download branch
-  if (format === 'svg') {
-    const blob = new Blob([svgStr], {type: 'image/svg+xml'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName + '.svg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-    resetBtn(true);
-    return;
-  }
 
   // --- Render to canvas at 2x DPI ---
   const canvas = document.createElement('canvas');
@@ -2816,7 +2803,7 @@ function downloadChart(exportFilename, format = 'png') {
       try {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(pngBlob);
-        a.download = fileName + '.png';
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3120,13 +3107,7 @@ function bindEvents() {
     dlPop.classList.add('hidden');
     downloadChart(dlInput.value.trim() || `inequality-${S.baseYear}-${S.finalYear}`);
   });
-  document.getElementById('downloadSVGBtn').addEventListener('click', () => {
-    const svgBtn = document.getElementById('downloadSVGBtn');
-    if (svgBtn.disabled) return;
-    svgBtn.disabled = true; svgBtn.textContent = '⏳';
-    downloadChart(`inequality-${S.baseYear}-${S.finalYear}`, 'svg');
-    setTimeout(() => { svgBtn.disabled = false; svgBtn.textContent = '⬇ SVG'; }, 2500);
-  });
+
   dlInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('dlConfirm').click(); }
     if (e.key === 'Escape') { dlPop.classList.add('hidden'); }
